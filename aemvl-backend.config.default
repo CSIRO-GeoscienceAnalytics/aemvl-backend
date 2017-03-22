@@ -1,0 +1,6 @@
+UPLOAD_FOLDER='./uploads'
+ALLOWED_EXTENSIONS=set(['xyz'])
+DEBUG=True
+SECRET_KEY='Change secret key here.'
+
+SQLITE_SESSION_DIRECTORY='./session'
