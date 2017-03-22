@@ -2,7 +2,7 @@ import os
 import json
 import sys
 from aemModel.parse import Parse
-from flask import request, session, redirect, url_for, send_from_directory
+from flask import request, session, redirect, url_for, send_from_directory, render_template
 from app import app
 from werkzeug.utils import secure_filename
 
@@ -11,10 +11,14 @@ def allowed_file(filename):
 
 @app.route("/")
 def hello():
-    return "Hello World!"
+    return redirect(url_for("api")) 
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload_file():
+@app.route("/api")
+def api():
+    return render_template("api.html")
+
+@app.route('/api/upload', methods=['GET', 'POST'])
+def api_upload():
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -41,28 +45,21 @@ def upload_file():
             except Exception as e:
                 app.logger.debug(e)
 
-            return redirect(url_for('show_session'))
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <p><input type=file name=file>
-         <input type=submit value=Upload>
-    </form>
-    '''
+            return redirect(url_for('api'))
+    return render_template("upload.html")
 
 ## TODO: Don't need this unless we want users to be able to download files.
 #@app.route('/uploads/<filename>')
 #def uploaded_file(filename):
 #    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 #return redirect(url_for('uploaded_file', filename = filename))
-@app.route('/clean')
+@app.route('/api/clean_session')
 def clean_session():
     session.clear()
     return "clean"
     
-    
-@app.route('/session')
+@app.route('/api/show_session')
 def show_session():
-    return str(session['test'])
+	return_value = str(session['test']) if ('test' in session) else ''
+	return render_template("show_session.html", session = return_value)
+    

@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block title %}API Index{% endblock %}
+
+{% block content %}
+	<h1>API Index</h1>
+	<ul>
+		<li><a href="{{ url_for('api_upload') }}">Upload</a></li>
+		<li><a href="{{ url_for('show_session') }}">Show Session</a></li>
+		<li><a href="{{ url_for('clean_session') }}">Clean Session</a></li>
+	</ul>
+{% endblock %}

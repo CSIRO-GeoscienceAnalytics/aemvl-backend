@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block title %}Session{% endblock %}
+
+{% block content %}
+	<h1>Upload</h1>
+	{% if session %}
+	{{ session }}
+	{% else %}
+	There is no session information.
+	{% endif %}
+{% endblock %}
