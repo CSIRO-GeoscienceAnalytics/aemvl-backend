@@ -2,6 +2,7 @@ import os
 import json
 import sys
 import sqlite3
+from shutil import copyfile
 from aemModel.parse import Parse
 from flask import request, session, redirect, url_for, send_from_directory, render_template
 from app import app
@@ -39,28 +40,58 @@ def api_upload():
             file_handle.save(path)
             flight = Parse().parse_file(path)
 
-            app.logger.debug(sys.getsizeof(flight.get_line(100101).to_json_friendly()))
             try:
                 session['test'] = flight.get_line(100101).to_json_friendly()
                 session.modified = True
-                
-                
-                connection = sqlite3.connect('example.db')
-                cursor = conn.cursor()
-                
-                cursor.execute('''
-                    CREATE TABLE line(
-                        line_number integer,
-                        trans text,
-                        symbol text,
-                        qty real,
-                        price real)''')
-                
-                
-                
-                
+
+                db_path = 'session/MAKERANDOM.db' # TODO
+                copyfile('skeleton.db', db_path)
+                connection = sqlite3.connect(db_path)
+                cursor = connection.cursor()
+
+                for line in flight.get_lines():
+                    cursor.execute('''
+                        INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
+                    line_id = cursor.lastrowid
+                    
+                    for station in line.get_stations():
+                        cursor.execute('''
+                            INSERT INTO station (
+                                line_id,
+                                fiducial_number,
+                                easting,
+                                northing,
+                                elevation,
+                                altitude) VALUES(?, ?, ?, ?, ?, ?)''', (
+                                line_id,
+                                station.get_fiducial_number(),
+                                station.get_easting(),
+                                station.get_northing(),
+                                station.get_elevation(),
+                                station.get_altitude()
+                            )
+                        )
+                        
+                        station_id = cursor.lastrowid
+                        
+                        em_decay = station.get_em_decay()
+                        em_decay_error = station.get_em_decay_error()
+                        
+                        measurements = []
+                        for i in range(len(em_decay)):
+                            measurements.append((station_id, em_decay[i], em_decay_error[i], i+1))
+                        
+                        cursor.executemany('''
+                            INSERT INTO measurement (
+                                station_id,
+                                em_decay,
+                                em_decay_error,
+                                sequence) VALUES(?, ?, ?, ?)''', measurements   # TODO: station_id + sequence should be unique.
+                        )
+
+                connection.commit()
             except Exception as e:
-                app.logger.debug(e)
+                app.logger.error(e)
 
             return redirect(url_for('api'))
     return render_template("upload.html")

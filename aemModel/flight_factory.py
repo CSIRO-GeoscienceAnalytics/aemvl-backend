@@ -15,11 +15,11 @@ class FlightFactory:
     def register_header(self, key, value):
         self._headers[key] = value
 
-    def register_sounding(self, line_number, fiducial_number, easting, northing, elevation, altitude, em_decay, em_decay_error):
+    def register_station(self, line_number, fiducial_number, easting, northing, elevation, altitude, em_decay, em_decay_error):
         if line_number not in self._lines:
             self._lines[line_number] = Line(line_number)
 
-        self._lines[line_number].add_sounding(Station(
+        self._lines[line_number].add_station(Station(
             fiducial_number,
             easting,
             northing,

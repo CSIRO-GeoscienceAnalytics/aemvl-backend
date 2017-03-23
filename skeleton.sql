@@ -14,17 +14,11 @@ CREATE TABLE `station` (
     FOREIGN KEY(line_id) REFERENCES line(line_id)
 );
 
-CREATE TABLE `sounding` (
-    `sounding_id`       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    `station_id`        INTEGER NOT NULL,
-    FOREIGN KEY(station_id) REFERENCES station(station_id)
-);
-
 CREATE TABLE `measurement` (
     `measurement_id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    `sounding_id`       INTEGER NOT NULL,
+    `station_id`        INTEGER NOT NULL,
     `em_decay`          REAL,
     `em_decay_error`    REAL,
     `sequence`          INTEGER NOT NULL,
-    FOREIGN KEY(sounding_id) REFERENCES sounding(sounding_id)    
+    FOREIGN KEY(station_id) REFERENCES station(station_id)
 );

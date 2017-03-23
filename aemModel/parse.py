@@ -43,9 +43,9 @@ class Parse:
                     if len(fields) < 5:
                         line = file_handle.readline().strip()
                         continue
-                        
 
-                    self.flight_factory.register_sounding(
+
+                    self.flight_factory.register_station(
                         line_number =       int(fields[0]),                                     # LINE
                         fiducial_number =   int(fields[3]),                                     # FID
                         easting =           float(fields[1]),                                   # X
