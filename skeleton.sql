@@ -20,5 +20,6 @@ CREATE TABLE `measurement` (
     `em_decay`          REAL,
     `em_decay_error`    REAL,
     `sequence`          INTEGER NOT NULL,
-    FOREIGN KEY(station_id) REFERENCES station(station_id)
+    FOREIGN KEY(station_id) REFERENCES station(station_id),
+    UNIQUE(station_id, sequence)
 );

@@ -86,7 +86,7 @@ def api_upload():
                                 station_id,
                                 em_decay,
                                 em_decay_error,
-                                sequence) VALUES(?, ?, ?, ?)''', measurements   # TODO: station_id + sequence should be unique.
+                                sequence) VALUES(?, ?, ?, ?)''', measurements
                         )
 
                 connection.commit()
