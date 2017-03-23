@@ -2,13 +2,14 @@ import os
 import json
 import sys
 import sqlite3
+import uuid
 from shutil import copyfile
 from aemModel.parse import Parse
 from flask import request, session, redirect, url_for, send_from_directory, render_template
 from app import app
 from werkzeug.utils import secure_filename
 
-DB_FILE_PATH = 'session/MAKERANDOM.db' # TODO
+DB_FILE_PATH = 'session/'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -43,11 +44,10 @@ def api_upload():
             flight = Parse().parse_file(path)
 
             try:
-                session['has_database'] = True
-                session.modified = True
+                session['database_guid'] = str(uuid.uuid1())
 
-                copyfile('skeleton.db', DB_FILE_PATH)
-                with sqlite3.connect(DB_FILE_PATH) as connection:
+                copyfile('skeleton.db', DB_FILE_PATH + session['database_guid'])
+                with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
                     cursor = connection.cursor()
 
                     for line in flight.get_lines():
@@ -93,13 +93,16 @@ def api_upload():
                     connection.commit()
             except Exception as e:
                 app.logger.error(e)
+            finally:
+                pass
+                # file_handle.unlink() TODO: remove the uploaded file.
 
             return redirect(url_for('api'))
     return render_template("upload.html")
 
 @app.route('/api/getLines/<output_type>')
 def get_lines(output_type):
-    with sqlite3.connect(DB_FILE_PATH) as connection:
+    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = connection.cursor().execute('SELECT line_id, line_number FROM line')
 
         if output_type == 'html':
@@ -115,7 +118,7 @@ def get_lines(output_type):
 
 @app.route('/api/getStations/<line_id>/<output_type>')
 def get_stations(line_id, output_type):
-    with sqlite3.connect(DB_FILE_PATH) as connection:
+    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = connection.cursor().execute('''
             SELECT  station_id,
                     fiducial_number,
@@ -139,7 +142,7 @@ def get_stations(line_id, output_type):
 
 @app.route('/api/getMeasurements/<station_id>/<output_type>')
 def get_measurements(station_id, output_type):
-    with sqlite3.connect(DB_FILE_PATH) as connection:
+    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = connection.cursor().execute('''
             SELECT  em_decay,
                     em_decay_error
@@ -165,5 +168,5 @@ def clean_session():
 
 @app.route('/api/show_session')
 def show_session():
-    return_value = str(session['has_database']) if ('has_database' in session) else ''
+    return_value = str(session['database_guid']) if ('database_guid' in session) else ''
     return render_template("show_session.html", session = return_value)
