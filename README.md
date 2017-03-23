@@ -9,4 +9,5 @@ Run the following commands:
 `source activate aemvl-backend`  
 `conda install --file requirements.txt`  
 `cd aemvl-backend`  
+`python skeleton.py`  
 `python main.py`
