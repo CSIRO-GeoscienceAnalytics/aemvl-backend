@@ -1,5 +1,6 @@
 import sys
 import pprint
+from app import app
 from aemModel.flight_factory import FlightFactory
 
 class Parse:
@@ -14,10 +15,10 @@ class Parse:
         current_header_key = None
 
         with open(path, 'r') as file_handle:
-            line = file_handle.readline().strip()
-            while line:
-                ## Deal with parsing the header information if it is available:
+            for line in file_handle:
+                line = line.strip()
 
+                ## Deal with parsing the header information if it is available:
                 # If has_header is None it means we don't know yet whether or not the Header was present.
                 if has_header == None:
                     has_header = line == '/HEADER:'
@@ -38,12 +39,6 @@ class Parse:
                 elif has_header == False:
                     ## If the header is not present, or it has already been parsed, then parse the data itself:
                     fields = line.split()
-                    
-                    ## TODO: FIX THIS
-                    if len(fields) < 5:
-                        line = file_handle.readline().strip()
-                        continue
-
 
                     self.flight_factory.register_station(
                         line_number =       int(fields[0]),                                     # LINE
@@ -55,7 +50,5 @@ class Parse:
                         em_decay =          [float(x) for x in fields[18:46] if x != 'NaN'],    # DATA_0    ... DATA_28
                         em_decay_error =    [float(x) for x in fields[47:75] if x != 'NaN']     # DATASTD_0 ... DATASTD_28
                     )
-
-                line = file_handle.readline().strip()
 
         return self.flight_factory.build_flight()

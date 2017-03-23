@@ -8,6 +8,8 @@ from flask import request, session, redirect, url_for, send_from_directory, rend
 from app import app
 from werkzeug.utils import secure_filename
 
+DB_FILE_PATH = 'session/MAKERANDOM.db' # TODO
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
@@ -41,66 +43,71 @@ def api_upload():
             flight = Parse().parse_file(path)
 
             try:
-                session['test'] = flight.get_line(100101).to_json_friendly()
+                session['has_database'] = True
                 session.modified = True
 
-                db_path = 'session/MAKERANDOM.db' # TODO
-                copyfile('skeleton.db', db_path)
-                connection = sqlite3.connect(db_path)
-                cursor = connection.cursor()
+                copyfile('skeleton.db', DB_FILE_PATH)
+                with sqlite3.connect(DB_FILE_PATH) as connection:
+                    cursor = connection.cursor()
 
-                for line in flight.get_lines():
-                    cursor.execute('''
-                        INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
-                    line_id = cursor.lastrowid
-                    
-                    for station in line.get_stations():
+                    for line in flight.get_lines():
                         cursor.execute('''
-                            INSERT INTO station (
-                                line_id,
-                                fiducial_number,
-                                easting,
-                                northing,
-                                elevation,
-                                altitude) VALUES(?, ?, ?, ?, ?, ?)''', (
-                                line_id,
-                                station.get_fiducial_number(),
-                                station.get_easting(),
-                                station.get_northing(),
-                                station.get_elevation(),
-                                station.get_altitude()
+                            INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
+                        line_id = cursor.lastrowid
+                        
+                        for station in line.get_stations():
+                            cursor.execute('''
+                                INSERT INTO station (
+                                    line_id,
+                                    fiducial_number,
+                                    easting,
+                                    northing,
+                                    elevation,
+                                    altitude) VALUES(?, ?, ?, ?, ?, ?)''', (
+                                    line_id,
+                                    station.get_fiducial_number(),
+                                    station.get_easting(),
+                                    station.get_northing(),
+                                    station.get_elevation(),
+                                    station.get_altitude()
+                                )
                             )
-                        )
-                        
-                        station_id = cursor.lastrowid
-                        
-                        em_decay = station.get_em_decay()
-                        em_decay_error = station.get_em_decay_error()
-                        
-                        measurements = []
-                        for i in range(len(em_decay)):
-                            measurements.append((station_id, em_decay[i], em_decay_error[i], i+1))
-                        
-                        cursor.executemany('''
-                            INSERT INTO measurement (
-                                station_id,
-                                em_decay,
-                                em_decay_error,
-                                sequence) VALUES(?, ?, ?, ?)''', measurements
-                        )
+                            
+                            station_id = cursor.lastrowid
+                            
+                            em_decay = station.get_em_decay()
+                            em_decay_error = station.get_em_decay_error()
+                            
+                            measurements = []
+                            for i in range(len(em_decay)):
+                                measurements.append((station_id, em_decay[i], em_decay_error[i], i + 1))
+                            
+                            cursor.executemany('''
+                                INSERT INTO measurement (
+                                    station_id,
+                                    em_decay,
+                                    em_decay_error,
+                                    sequence) VALUES(?, ?, ?, ?)''', measurements
+                            )
 
-                connection.commit()
+                    connection.commit()
             except Exception as e:
                 app.logger.error(e)
 
             return redirect(url_for('api'))
     return render_template("upload.html")
 
-## TODO: Don't need this unless we want users to be able to download files.
-#@app.route('/uploads/<filename>')
-#def uploaded_file(filename):
-#    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-#return redirect(url_for('uploaded_file', filename = filename))
+@app.route('/api/getLines')
+def get_lines():
+    with sqlite3.connect(DB_FILE_PATH) as connection:
+        cursor = connection.cursor()
+        result_set = cursor.execute('SELECT line_id, line_number FROM line')
+
+        x = ''
+        for row in result_set:
+            x = x + ' ' + str(row)
+    return x
+
 @app.route('/api/clean_session')
 def clean_session():
     session.clear()
@@ -108,6 +115,20 @@ def clean_session():
     
 @app.route('/api/show_session')
 def show_session():
-	return_value = str(session['test']) if ('test' in session) else ''
-	return render_template("show_session.html", session = return_value)
+    return_value = str(session['has_database']) if ('has_database' in session) else ''
+    return render_template("show_session.html", session = return_value)
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
