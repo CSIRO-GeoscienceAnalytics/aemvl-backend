@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+import sqlite3
 from aemModel.parse import Parse
 from flask import request, session, redirect, url_for, send_from_directory, render_template
 from app import app
@@ -42,6 +43,22 @@ def api_upload():
             try:
                 session['test'] = flight.get_line(100101).to_json_friendly()
                 session.modified = True
+                
+                
+                connection = sqlite3.connect('example.db')
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    CREATE TABLE line(
+                        line_number integer,
+                        trans text,
+                        symbol text,
+                        qty real,
+                        price real)''')
+                
+                
+                
+                
             except Exception as e:
                 app.logger.debug(e)
 
