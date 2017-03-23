@@ -1,4 +1,5 @@
 aemvl-backend.config
+skeleton.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
