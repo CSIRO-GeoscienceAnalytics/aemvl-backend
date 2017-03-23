@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}Stations{% endblock %}
+
+{% block content %}
+    <h1>Stations</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Station Id.</th>
+                <th>Fiducial number</th>
+                <th>Easting</th>
+                <th>Northing</th>
+                <th>Elevation</th>
+                <th>Altitude</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for station in stations %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('get_measurements', station_id = station[0], output_type = 'html') }}">{{ station[0] }}</a>
+                    </td>
+                    <td>{{ station[1] }}</td>
+                    <td>{{ station[2] }}</td>
+                    <td>{{ station[3] }}</td>
+                    <td>{{ station[4] }}</td>
+                    <td>{{ station[5] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

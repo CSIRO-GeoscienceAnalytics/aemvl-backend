@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}Lines{% endblock %}
+
+{% block content %}
+    <h1>Lines</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Line Id.</th>
+                <th>Line Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in lines %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('get_stations', line_id = line[0], output_type = 'html') }}">{{ line[0] }}</a>
+                    </td>
+                    <td>
+                        {{ line[1] }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

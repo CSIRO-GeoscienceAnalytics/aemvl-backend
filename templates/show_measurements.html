@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block title %}Measurements{% endblock %}
+
+{% block content %}
+    <h1>Measurements</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>EM Decay</th>
+                <th>EM Decay Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for measurement in measurements %}
+                <tr>
+                    <td>{{ measurement[0] }}</td>
+                    <td>{{ measurement[1] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

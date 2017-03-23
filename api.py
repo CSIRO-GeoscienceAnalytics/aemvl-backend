@@ -97,16 +97,66 @@ def api_upload():
             return redirect(url_for('api'))
     return render_template("upload.html")
 
-@app.route('/api/getLines')
-def get_lines():
+@app.route('/api/getLines/<output_type>')
+def get_lines(output_type):
     with sqlite3.connect(DB_FILE_PATH) as connection:
-        cursor = connection.cursor()
-        result_set = cursor.execute('SELECT line_id, line_number FROM line')
+        result_set = connection.cursor().execute('SELECT line_id, line_number FROM line')
 
-        x = ''
-        for row in result_set:
-            x = x + ' ' + str(row)
-    return x
+        if output_type == 'html':
+            return_value = []
+            for row in result_set:
+                return_value.append(row)
+                
+            return render_template("show_lines.html", lines = return_value)
+        elif output_type == 'csv':
+            pass
+        else:
+            return 'Unsupported output type specified.'
+
+@app.route('/api/getStations/<line_id>/<output_type>')
+def get_stations(line_id, output_type):
+    with sqlite3.connect(DB_FILE_PATH) as connection:
+        result_set = connection.cursor().execute('''
+            SELECT  station_id,
+                    fiducial_number,
+                    easting,
+                    northing,
+                    elevation,
+                    altitude
+            FROM    station
+            WHERE   line_id = ?''', (line_id,))
+
+        if output_type == 'html':
+            return_value = []
+            for row in result_set:
+                return_value.append(row)
+
+            return render_template("show_stations.html", stations = return_value)
+        elif output_type == 'csv':
+            pass
+        else:
+            return 'Unsupported output type specified.'
+
+@app.route('/api/getMeasurements/<station_id>/<output_type>')
+def get_measurements(station_id, output_type):
+    with sqlite3.connect(DB_FILE_PATH) as connection:
+        result_set = connection.cursor().execute('''
+            SELECT  em_decay,
+                    em_decay_error
+            FROM    measurement
+            WHERE   station_id = ?
+            ORDER BY sequence''', (station_id,))
+
+        if output_type == 'html':
+            return_value = []
+            for row in result_set:
+                return_value.append(row)
+            
+            return render_template("show_measurements.html", measurements = return_value)
+        elif output_type == 'csv':
+            pass
+        else:
+            return 'Unsupported output type specified.'
 
 @app.route('/api/clean_session')
 def clean_session():
@@ -117,18 +167,3 @@ def clean_session():
 def show_session():
     return_value = str(session['has_database']) if ('has_database' in session) else ''
     return render_template("show_session.html", session = return_value)
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
