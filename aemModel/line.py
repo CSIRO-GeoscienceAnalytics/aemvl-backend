@@ -39,9 +39,6 @@ class Line:
         
         for station in self.get_stations():
             stations.append(station.to_json_friendly())
-            
-            #if len(stations) == 100:
-             #   break
 
         return {
             'line_number':  self.get_line_number(),

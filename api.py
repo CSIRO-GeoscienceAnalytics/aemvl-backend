@@ -162,7 +162,7 @@ def get_measurements(station_id, output_type):
 def clean_session():
     session.clear()
     return "clean"
-    
+
 @app.route('/api/show_session')
 def show_session():
     return_value = str(session['has_database']) if ('has_database' in session) else ''
