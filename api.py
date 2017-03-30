@@ -136,6 +136,7 @@ def get_stations(line_id, output_type):
 
             return render_template("show_stations.html", stations = return_value)
         elif output_type == 'csv':
+            
             pass
         else:
             return 'Unsupported output type specified.'
@@ -170,3 +171,6 @@ def clean_session():
 def show_session():
     return_value = str(session['database_guid']) if ('database_guid' in session) else ''
     return render_template("show_session.html", session = return_value)
+
+def result_set_to_csv(result_set):
+   pass 
