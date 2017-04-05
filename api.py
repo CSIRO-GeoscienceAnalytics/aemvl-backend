@@ -105,8 +105,9 @@ def api_upload():
 def get_lines(output_type):
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql(
-            'SELECT line_id, line_number FROM line',
-            connection)
+            'SELECT 1 as id, line_id, line_number FROM line',
+            connection,
+            index_col = 'id')
 
         if output_type == 'html':
             return render_template(
@@ -119,7 +120,7 @@ def get_lines(output_type):
                         str],
                         escape = False))
         elif output_type == 'csv':
-            return Response(result_set.to_csv(), mimetype = 'text/plain')
+            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified.'
 
@@ -127,7 +128,8 @@ def get_lines(output_type):
 def get_stations(line_id, output_type):
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql('''
-            SELECT  station_id,
+            SELECT  1 as id,
+                    station_id,
                     fiducial_number,
                     easting,
                     northing,
@@ -136,7 +138,8 @@ def get_stations(line_id, output_type):
             FROM    station
             WHERE   line_id = ?''',
             connection,
-            params = [line_id])
+            params = [line_id],
+            index_col = 'id')
             
         if output_type == 'html':
             return render_template(
@@ -153,7 +156,7 @@ def get_stations(line_id, output_type):
                         str],
                         escape = False))
         elif output_type == 'csv':
-            return Response(result_set.to_csv(), mimetype = 'text/plain')
+            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified.'
 
@@ -177,7 +180,7 @@ def get_measurements(station_id, output_type):
                     index = False,
                     escape = False))
         elif output_type == 'csv':
-            return Response(result_set.to_csv(), mimetype = 'text/plain')
+            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified.'
 
