@@ -3,9 +3,10 @@ import json
 import sys
 import sqlite3
 import uuid
+import pandas
 from shutil import copyfile
 from aemModel.parse import Parse
-from flask import request, session, redirect, url_for, send_from_directory, render_template
+from flask import request, session, redirect, url_for, send_from_directory, render_template, Response
 from app import app
 from werkzeug.utils import secure_filename
 
@@ -103,23 +104,29 @@ def api_upload():
 @app.route('/api/getLines/<output_type>')
 def get_lines(output_type):
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-        result_set = connection.cursor().execute('SELECT line_id, line_number FROM line')
+        result_set = pandas.read_sql(
+            'SELECT line_id, line_number FROM line',
+            connection)
 
         if output_type == 'html':
-            return_value = []
-            for row in result_set:
-                return_value.append(row)
-                
-            return render_template("show_lines.html", lines = return_value)
+            return render_template(
+                "dataframe_to_table.html",
+                title = 'Lines',
+                html = result_set.to_html(
+                    index = False,
+                    formatters = [
+                        lambda line_id: "<a href='{}'>{}</a>".format(url_for('get_stations', line_id = line_id, output_type = 'html'), line_id),
+                        str],
+                        escape = False))
         elif output_type == 'csv':
-            pass
+            return Response(result_set.to_csv(), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified.'
 
 @app.route('/api/getStations/<line_id>/<output_type>')
 def get_stations(line_id, output_type):
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-        result_set = connection.cursor().execute('''
+        result_set = pandas.read_sql('''
             SELECT  station_id,
                     fiducial_number,
                     easting,
@@ -127,38 +134,50 @@ def get_stations(line_id, output_type):
                     elevation,
                     altitude
             FROM    station
-            WHERE   line_id = ?''', (line_id,))
-
-        if output_type == 'html':
-            return_value = []
-            for row in result_set:
-                return_value.append(row)
-
-            return render_template("show_stations.html", stations = return_value)
-        elif output_type == 'csv':
+            WHERE   line_id = ?''',
+            connection,
+            params = [line_id])
             
-            pass
+        if output_type == 'html':
+            return render_template(
+                "dataframe_to_table.html",
+                title = 'Stations',
+                html = result_set.to_html(
+                    index = False,
+                    formatters = [
+                        lambda station_id: "<a href='{}'>{}</a>".format(url_for('get_measurements', station_id = station_id, output_type = 'html'), station_id),
+                        str,
+                        str,
+                        str,
+                        str,
+                        str],
+                        escape = False))
+        elif output_type == 'csv':
+            return Response(result_set.to_csv(), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified.'
 
 @app.route('/api/getMeasurements/<station_id>/<output_type>')
 def get_measurements(station_id, output_type):
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-        result_set = connection.cursor().execute('''
+        result_set = pandas.read_sql('''
             SELECT  em_decay,
                     em_decay_error
             FROM    measurement
             WHERE   station_id = ?
-            ORDER BY sequence''', (station_id,))
+            ORDER BY sequence''',
+            connection,
+            params = [station_id])
 
         if output_type == 'html':
-            return_value = []
-            for row in result_set:
-                return_value.append(row)
-            
-            return render_template("show_measurements.html", measurements = return_value)
+            return render_template(
+                "dataframe_to_table.html",
+                title = 'Measurements',
+                html = result_set.to_html(
+                    index = False,
+                    escape = False))
         elif output_type == 'csv':
-            pass
+            return Response(result_set.to_csv(), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified.'
 
@@ -172,5 +191,25 @@ def show_session():
     return_value = str(session['database_guid']) if ('database_guid' in session) else ''
     return render_template("show_session.html", session = return_value)
 
-def result_set_to_csv(result_set):
-   pass 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
