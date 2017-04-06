@@ -15,7 +15,7 @@
   "requests": [
     {
       "id": "351ac604-1e4a-e1bd-0dda-a6462f320375",
-      "headers": "",
+      "headers": ["Accept: text/csv"],
       "url": "http://conda:8080/api/upload",
       "pathVariables": [],
       "preRequestScript": null,
@@ -37,7 +37,8 @@
       "version": 2,
       "responses": [],
       "tests": [
-        "tests[\"Status code is 200\"] = responseCode.code === 200;"
+        "tests[\"Status code is 200\"] = responseCode.code === 200;",
+        "tests[\"Body matches confirmation\"] = responseBody.has(\"file uploaded\");"
       ],
       "currentHelper": "normal",
       "helperAttributes": []

@@ -37,6 +37,8 @@ def api():
 
 @app.route('/api/upload', methods=['GET', 'POST'])
 def api_upload():
+    output_type = get_preferred_output_type()
+    
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -110,7 +112,11 @@ def api_upload():
                 pass
                 # file_handle.unlink() TODO: remove the uploaded file.
 
-            return redirect(url_for('api'))
+            if output_type == HTML_TYPE:
+                return redirect(url_for('api'))
+            elif output_type == CSV_TYPE:
+                return "file uploaded"            
+
     return render_template("upload.html")
 
 @app.route('/api/getLines', methods=['GET', 'POST'])
