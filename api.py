@@ -11,9 +11,21 @@ from app import app
 from werkzeug.utils import secure_filename
 
 DB_FILE_PATH = 'session/'
+CSV_TYPE = 1
+HTML_TYPE = 2
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def get_preferred_output_type():
+    accept_headers = request.headers.get('Accept').split(',')
+    
+    if 'text/csv' in accept_headers:
+        return CSV_TYPE
+    elif 'text/html' in accept_headers:
+        return HTML_TYPE
+    else:
+        return None
 
 @app.route("/")
 def hello():
@@ -101,31 +113,39 @@ def api_upload():
             return redirect(url_for('api'))
     return render_template("upload.html")
 
-@app.route('/api/getLines/<output_type>')
-def get_lines(output_type):
+@app.route('/api/getLines', methods=['GET', 'POST'])
+def get_lines():
+    output_type = get_preferred_output_type()
+    
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql(
             'SELECT 1 as id, line_id, line_number FROM line',
             connection,
             index_col = 'id')
 
-        if output_type == 'html':
+        if output_type == HTML_TYPE:
             return render_template(
                 "dataframe_to_table.html",
                 title = 'Lines',
                 html = result_set.to_html(
                     index = False,
                     formatters = [
-                        lambda line_id: "<a href='{}'>{}</a>".format(url_for('get_stations', line_id = line_id, output_type = 'html'), line_id),
+                        lambda line_id: "<a href='{}'>{}</a>".format(url_for('get_stations', line_id = line_id), line_id),
                         str],
                         escape = False))
-        elif output_type == 'csv':
+        elif output_type == CSV_TYPE:
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
-            return 'Unsupported output type specified.'
+            return 'Unsupported output type specified: ' + output_type
 
-@app.route('/api/getStations/<line_id>/<output_type>')
-def get_stations(line_id, output_type):
+@app.route('/api/getStations', defaults={'line_id': None}, methods=['POST'])
+@app.route('/api/getStations/<line_id>')
+def get_stations(line_id):
+    output_type = get_preferred_output_type()
+    
+    if request.method == 'POST':
+        line_id = request.form['line_id']
+    
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql('''
             SELECT  1 as id,
@@ -141,27 +161,33 @@ def get_stations(line_id, output_type):
             params = [line_id],
             index_col = 'id')
             
-        if output_type == 'html':
+        if output_type == HTML_TYPE:
             return render_template(
                 "dataframe_to_table.html",
                 title = 'Stations',
                 html = result_set.to_html(
                     index = False,
                     formatters = [
-                        lambda station_id: "<a href='{}'>{}</a>".format(url_for('get_measurements', station_id = station_id, output_type = 'html'), station_id),
+                        lambda station_id: "<a href='{}'>{}</a>".format(url_for('get_measurements', station_id = station_id), station_id),
                         str,
                         str,
                         str,
                         str,
                         str],
                         escape = False))
-        elif output_type == 'csv':
+        elif output_type == CSV_TYPE:
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
-            return 'Unsupported output type specified.'
+            return 'Unsupported output type specified: ' + output_type
 
-@app.route('/api/getMeasurements/<station_id>/<output_type>')
-def get_measurements(station_id, output_type):
+@app.route('/api/getMeasurements', defaults={'station_id': None}, methods=['POST'])
+@app.route('/api/getMeasurements/<station_id>')
+def get_measurements(station_id):
+    output_type = get_preferred_output_type()
+    
+    if request.method == 'POST':
+        station_id = request.form['station_id']
+    
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql('''
             SELECT  em_decay,
@@ -172,17 +198,17 @@ def get_measurements(station_id, output_type):
             connection,
             params = [station_id])
 
-        if output_type == 'html':
+        if output_type == HTML_TYPE:
             return render_template(
                 "dataframe_to_table.html",
                 title = 'Measurements',
                 html = result_set.to_html(
                     index = False,
                     escape = False))
-        elif output_type == 'csv':
+        elif output_type == CSV_TYPE:
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
-            return 'Unsupported output type specified.'
+            return 'Unsupported output type specified: ' + output_type
 
 @app.route('/api/clean_session')
 def clean_session():

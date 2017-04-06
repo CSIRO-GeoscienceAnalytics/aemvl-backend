@@ -1,0 +1,122 @@
+{
+  "id": "96993a79-323a-d915-1e2f-d7c1f858b914",
+  "name": "CAPDF-AEM",
+  "description": "",
+  "order": [
+    "351ac604-1e4a-e1bd-0dda-a6462f320375",
+    "8008616d-ddc2-41b2-cd4b-4cb5d4825fca",
+    "f9b3bb59-da98-7002-58b0-c89e2219c342",
+    "9c0bfcb8-4e8a-62d0-dc24-ffbce4f3d8c0"
+  ],
+  "folders": [],
+  "timestamp": 1491374952066,
+  "owner": "1844666",
+  "public": false,
+  "requests": [
+    {
+      "id": "351ac604-1e4a-e1bd-0dda-a6462f320375",
+      "headers": "",
+      "url": "http://conda:8080/api/upload",
+      "pathVariables": [],
+      "preRequestScript": null,
+      "method": "POST",
+      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914",
+      "data": [
+        {
+          "key": "file",
+          "value": "../../docs/example1.xyz",
+          "type": "file",
+          "enabled": true
+        }
+      ],
+      "dataMode": "params",
+      "name": "http://conda:8080/api/upload",
+      "description": "",
+      "descriptionFormat": "html",
+      "time": 1491374952065,
+      "version": 2,
+      "responses": [],
+      "tests": [
+        "tests[\"Status code is 200\"] = responseCode.code === 200;"
+      ],
+      "currentHelper": "normal",
+      "helperAttributes": []
+    },
+    {
+      "id": "8008616d-ddc2-41b2-cd4b-4cb5d4825fca",
+      "url": "http://conda:8080/api/getLines",
+      "method": "POST",
+      "headers": ["Accept: text/csv"],
+      "data": null,
+      "dataMode": "params",
+      "tests": [
+        "tests[\"Status code is 200\"] = responseCode.code === 200;",
+        "tests[\"Body matches line_id,line_number\"] = responseBody.has(\"line_id,line_number\");",
+        "tests[\"Body matches 100201\"] = responseBody.has(\"100201\");"
+      ],
+      "preRequestScript": null,
+      "currentHelper": "normal",
+      "pathVariables": [],
+      "version": 2,
+      "name": "http://conda:8080/api/getLines",
+      "description": "",
+      "descriptionFormat": "html",
+      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914"
+    },
+    {
+      "id": "f9b3bb59-da98-7002-58b0-c89e2219c342",
+      "url": "http://conda:8080/api/getStations",
+      "method": "POST",
+      "headers": ["Accept: text/csv"],
+      "data": [
+        {
+          "key": "line_id",
+          "value": "1",
+          "type": "text",
+          "enabled": true
+        }
+      ],
+      "dataMode": "params",
+      "tests": [
+        "tests[\"Status code is 200\"] = responseCode.code === 200;"
+      ],
+      "preRequestScript": null,
+      "currentHelper": "normal",
+      "pathVariables": [],
+      "version": 2,
+      "name": "http://conda:8080/api/getStations",
+      "description": "",
+      "descriptionFormat": "html",
+      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914"
+    },
+    {
+      "id": "9c0bfcb8-4e8a-62d0-dc24-ffbce4f3d8c0",
+      "headers": ["Accept: text/csv"],
+      "url": "http://conda:8080/api/getMeasurements",
+      "pathVariables": [],
+      "preRequestScript": null,
+      "method": "POST",
+      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914",
+      "data": [
+        {
+          "key": "station_id",
+          "value": "10",
+          "type": "text",
+          "enabled": true
+        }
+      ],
+      "dataMode": "params",
+      "name": "http://conda:8080/api/getMeasurements",
+      "description": "",
+      "descriptionFormat": "html",
+      "time": 1491374997169,
+      "version": 2,
+      "responses": [],
+      "tests": [
+        "tests[\"Status code is 200\"] = responseCode.code === 200;"
+      ],
+      "currentHelper": "normal",
+      "helperAttributes": []
+    }
+  ]
+}
