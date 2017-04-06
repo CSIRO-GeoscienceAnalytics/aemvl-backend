@@ -225,26 +225,3 @@ def clean_session():
 def show_session():
     return_value = str(session['database_guid']) if ('database_guid' in session) else ''
     return render_template("show_session.html", session = return_value)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
