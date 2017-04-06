@@ -136,7 +136,7 @@ def get_lines():
         elif output_type == CSV_TYPE:
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
-            return 'Unsupported output type specified: ' + output_type
+            return 'Unsupported output type specified: ' + str(output_type)
 
 @app.route('/api/getStations', defaults={'line_id': None}, methods=['POST'])
 @app.route('/api/getStations/<line_id>')
@@ -178,7 +178,7 @@ def get_stations(line_id):
         elif output_type == CSV_TYPE:
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
-            return 'Unsupported output type specified: ' + output_type
+            return 'Unsupported output type specified: ' + str(output_type)
 
 @app.route('/api/getMeasurements', defaults={'station_id': None}, methods=['POST'])
 @app.route('/api/getMeasurements/<station_id>')
@@ -208,7 +208,7 @@ def get_measurements(station_id):
         elif output_type == CSV_TYPE:
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
-            return 'Unsupported output type specified: ' + output_type
+            return 'Unsupported output type specified: ' + str(output_type)
 
 @app.route('/api/clean_session')
 def clean_session():

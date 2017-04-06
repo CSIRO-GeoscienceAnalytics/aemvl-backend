@@ -51,8 +51,8 @@
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches line_id,line_number\"] = responseBody.has(\"line_id,line_number\");",
-        "tests[\"Body matches 100201\"] = responseBody.has(\"100201\");"
+        "tests[\"Body matches header row\"] = responseBody.has(\"line_id,line_number\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"100201\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -78,7 +78,9 @@
       ],
       "dataMode": "params",
       "tests": [
-        "tests[\"Status code is 200\"] = responseCode.code === 200;"
+        "tests[\"Status code is 200\"] = responseCode.code === 200;",
+        "tests[\"Body matches header row\"] = responseBody.has(\"station_id,fiducial_number,easting,northing,elevation,altitude\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"177,768741.4,7252166.5,-19.3,33.03\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -113,7 +115,9 @@
       "version": 2,
       "responses": [],
       "tests": [
-        "tests[\"Status code is 200\"] = responseCode.code === 200;"
+        "tests[\"Status code is 200\"] = responseCode.code === 200;",
+        "tests[\"Body matches header row\"] = responseBody.has(\"em_decay,em_decay_error\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"3.904e-07,0.03\");"
       ],
       "currentHelper": "normal",
       "helperAttributes": []
