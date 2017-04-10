@@ -68,6 +68,7 @@ def api_upload():
                     for line in flight.get_lines():
                         cursor.execute('''
                             INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
+                        
                         line_id = cursor.lastrowid
                         
                         for station in line.get_stations():
@@ -149,9 +150,25 @@ def get_lines():
 def get_stations(line_id):
     output_type = get_preferred_output_type()
     
+    bbox_clause = ''
+    
     if request.method == 'POST':
         line_id = request.form['line_id']
-    
+        
+        if ('easting_min' in request.form and
+            'easting_max' in request.form and
+            'northing_min' in request.form and
+            'northing_max' in request.form):
+
+            bbox_clause = '''
+                AND easting BETWEEN {0} AND {1}
+                AND northing BETWEEN {2} AND {3}
+            '''.format(
+                float(request.form['easting_min']),
+                float(request.form['easting_max']),
+                float(request.form['northing_min']),
+                float(request.form['northing_max']))
+
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql('''
             SELECT  1 as id,
@@ -162,7 +179,7 @@ def get_stations(line_id):
                     elevation,
                     altitude
             FROM    station
-            WHERE   line_id = ?''',
+            WHERE   line_id = ?''' + bbox_clause,
             connection,
             params = [line_id],
             index_col = 'id')
