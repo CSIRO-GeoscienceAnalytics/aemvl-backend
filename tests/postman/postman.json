@@ -25,7 +25,7 @@
       "data": [
         {
           "key": "file",
-          "value": "../../docs/AUS_10004_CSIRO_EM_HM.XYZ",
+          "value": "../../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ",
           "type": "file",
           "enabled": true
         }
