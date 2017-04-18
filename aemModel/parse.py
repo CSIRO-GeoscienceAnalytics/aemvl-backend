@@ -1,31 +1,31 @@
 import sys
 import pprint
 from app import app
-from aemModel.flight_factory import FlightFactory
+from aemModel.model_factory import ModelFactory
 import pandas
 import re
 
 class Parse:
-    flight_factory = None
+    model_factory = None
 
     def __init__(self):
-        self.flight_factory = FlightFactory()
+        self.model_factory = ModelFactory()
 
     def parse_file(self, path):
         column_aliases = {
             # Key name          # Array of acceptable names for this column (they get turned into regular expressions)
             'job_number':       ['Job_No'],
-            'fiducial_number':  ['Fid'],
-            'line_number':      ['Line'],
             'flight_number':    ['Flight'],
+            'line_number':      ['Line'],
+            'fiducial_number':  ['Fid'],
             'datetime':         ['DateTime'],
             'date':             ['Date'],
             'time':             ['Time'],
             'angle_x':          ['AngleX'],
             'angle_y':          ['AngleY'],
             'height':           ['Height'],
-            'longitude':        ['Lon'],
             'latitude':         ['Lat'],
+            'longitude':        ['Lon'],
             'easting':          ['E_MGA54'],
             'northing':         ['N_MGA54'],
             'elevation':        ['DEM_AHD'],
@@ -70,46 +70,36 @@ class Parse:
                             columns_dict[key] = file_column
         
         for column, row in dataframe.iterrows():
-            """
-            print(row[columns_dict['job_number']])
-            print(row[columns_dict['fiducial_number']])
-            print(row[columns_dict['line_number']])
-            print(row[columns_dict['flight_number']])
-            print(row[columns_dict['datetime']])
-            print(row[columns_dict['date']])
-            print(row[columns_dict['time']])
-            print(row[columns_dict['angle_x']])
-            print(row[columns_dict['angle_y']])
-            print(row[columns_dict['height']])
-            print(row[columns_dict['longitude']])
-            print(row[columns_dict['latitude']])
-            print(row[columns_dict['easting']])
-            print(row[columns_dict['northing']])
-            print(row[columns_dict['elevation']])
-            print(row[columns_dict['altitude']])
-            print(row[columns_dict['ground_speed']])
-            print(row[columns_dict['curr_1']])
-            print(row[columns_dict['plni']])
-            """
-
             em_decay = []
             for i in columns_dict['em_decay']:
                 em_decay.append(float(row[em_decay_format.replace('*', str(i))]))
-                
+
             em_decay_error = []
             for i in columns_dict['em_decay_error']:
                 em_decay_error.append(float(row[em_decay_error_format.replace('*', str(i))]))
 
-            self.flight_factory.register_station(
+            self.model_factory.register_row(
+                job_number =        int(row[columns_dict['job_number']]),
+                flight_number =     float(row[columns_dict['flight_number']]),
                 line_number =       int(row[columns_dict['line_number']]),
                 fiducial_number =   float(row[columns_dict['fiducial_number']]),
-                ## TODO: ADD LAT LONG
+                datetime =          float(row[columns_dict['datetime']]),
+                date =              int(row[columns_dict['date']]),
+                time =              float(row[columns_dict['time']]),
+                angle_x =           float(row[columns_dict['angle_x']]),
+                angle_y =           float(row[columns_dict['angle_y']]),
+                height =            float(row[columns_dict['height']]),
+                latitude =          float(row[columns_dict['latitude']]),
+                longitude =         float(row[columns_dict['longitude']]),
                 easting =           float(row[columns_dict['easting']]),
                 northing =          float(row[columns_dict['northing']]),
                 elevation =         float(row[columns_dict['elevation']]),
                 altitude =          float(row[columns_dict['altitude']]),
+                ground_speed =      float(row[columns_dict['ground_speed']]),
+                curr_1 =            float(row[columns_dict['curr_1']]),
+                plni =              float(row[columns_dict['plni']]),
                 em_decay =          em_decay,
                 em_decay_error =    em_decay_error
             )
 
-        return self.flight_factory.build_flight()
+        return self.model_factory.build_model()

@@ -1,23 +1,17 @@
-from aemModel.line import Line
-from aemModel.station import Station
+from aemModel.job import Job
+from app import app
 
-class Flight:
-    _flight_number = None
-    
-    # Format of _lines is dict(line_number, Line())
-    _lines = dict()
+class ModelFactory:
+    # Format of _jobs is dict(job_number, Job())
+    _jobs = dict()
 
-    def __init__(self, flight_number):
-        self._flight_number = flight_number
+    def __init__(self):
+        pass
 
-    def get_lines(self):
-        return self._lines.values()
-
-    def get_line(self, line_number):
-        return self._lines[line_number]
-    
     def register_row(
         self,
+        job_number,
+        flight_number,
         line_number,
         fiducial_number,
         datetime,
@@ -37,11 +31,13 @@ class Flight:
         plni,
         em_decay,
         em_decay_error):
-            
-        if line_number not in self._lines:
-            self._lines[line_number] = Line(line_number)
-        
-        self._lines[line_number].add_station(Station(
+
+        if job_number not in self._jobs:
+            self._jobs[job_number] = Job(job_number)
+
+        self._jobs[job_number].register_row(
+            flight_number,
+            line_number,
             fiducial_number,
             datetime,
             date,
@@ -59,5 +55,11 @@ class Flight:
             curr_1,
             plni,
             em_decay,
-            em_decay_error)
+            em_decay_error
         )
+
+    def build_model(self):
+        return self._jobs.values()
+
+    def __str__(self):
+        return "Not implemented."

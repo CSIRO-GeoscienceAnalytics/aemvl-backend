@@ -46,8 +46,6 @@ def api_upload():
             return redirect(request.url)
         file_handle = request.files['file']
         
-        # if user does not select file, browser also
-        # submit a empty part without filename
         if file_handle.filename == '':
             flash('No selected file')
             return redirect(request.url)
@@ -56,55 +54,67 @@ def api_upload():
 
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file_handle.save(path)
-            flight = Parse().parse_file(path)
-
+            jobs = Parse().parse_file(path)
+            
             try:
                 session['database_guid'] = str(uuid.uuid1())
 
                 copyfile('skeleton.db', DB_FILE_PATH + session['database_guid'])
                 with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
                     cursor = connection.cursor()
-
-                    for line in flight.get_lines():
+                    
+                    for job in jobs:
                         cursor.execute('''
-                            INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
+                            INSERT INTO job (job_number) VALUES(?)''', (job.get_job_number(),))
                         
-                        line_id = cursor.lastrowid
+                        job_id = cursor.lastrowid
                         
-                        for station in line.get_stations():
+                        for flight in jobs.get_flights():
                             cursor.execute('''
-                                INSERT INTO station (
-                                    line_id,
-                                    fiducial_number,
-                                    easting,
-                                    northing,
-                                    elevation,
-                                    altitude) VALUES(?, ?, ?, ?, ?, ?)''', (
-                                    line_id,
-                                    station.get_fiducial_number(),
-                                    station.get_easting(),
-                                    station.get_northing(),
-                                    station.get_elevation(),
-                                    station.get_altitude()
-                                )
-                            )
-                            
-                            station_id = cursor.lastrowid
-                            
-                            em_decay = station.get_em_decay()
-                            em_decay_error = station.get_em_decay_error()
-                            
-                            measurements = []
-                            for i in range(len(em_decay)):
-                                measurements.append((station_id, em_decay[i], em_decay_error[i], i + 1))
-                            
-                            cursor.executemany('''
-                                INSERT INTO measurement (
-                                    station_id,
-                                    em_decay,
-                                    em_decay_error,
-                                    sequence) VALUES(?, ?, ?, ?)''', measurements
-                            )
+                            INSERT INTO flight (flight_number) VALUES(?)''', (flight.get_flight_number(),))
+                        
+                            flight_id = cursor.lastrowid
+
+                            for line in flight.get_lines():
+                                cursor.execute('''
+                                    INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
+                                
+                                line_id = cursor.lastrowid
+                                
+                                for station in line.get_stations():
+                                    cursor.execute('''
+                                        INSERT INTO station (
+                                            line_id,
+                                            fiducial_number,
+                                            easting,
+                                            northing,
+                                            elevation,
+                                            altitude) VALUES(?, ?, ?, ?, ?, ?)''', (
+                                            line_id,
+                                            station.get_fiducial_number(),
+                                            station.get_easting(),
+                                            station.get_northing(),
+                                            station.get_elevation(),
+                                            station.get_altitude()
+                                        )
+                                    )
+                                    
+                                    station_id = cursor.lastrowid
+                                    
+                                    em_decay = station.get_em_decay()
+                                    em_decay_error = station.get_em_decay_error()
+                                    
+                                    measurements = []
+                                    for i in range(len(em_decay)):
+                                        measurements.append((station_id, em_decay[i], em_decay_error[i], i + 1))
+                                    
+                                    cursor.executemany('''
+                                        INSERT INTO measurement (
+                                            station_id,
+                                            em_decay,
+                                            em_decay_error,
+                                            sequence) VALUES(?, ?, ?, ?)''', measurements
+                                    )
 
                     connection.commit()
             except Exception as e:
