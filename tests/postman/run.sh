@@ -1,0 +1,1 @@
+newman run postman.json
