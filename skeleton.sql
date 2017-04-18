@@ -7,7 +7,6 @@ CREATE TABLE `flight` (
     `flight_id`         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     `job_id`            INTEGER NOT NULL,
     `flight_number`     INTEGER NOT NULL,
-    `date`              INTEGER NOT NULL,
     FOREIGN KEY(job_id) REFERENCES job(job_id)
 );
 
@@ -21,9 +20,6 @@ CREATE TABLE `line` (
 CREATE TABLE `station` (
     `station_id`         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     `line_id`            INTEGER NOT NULL,
-    `job_number`         INTEGER NOT NULL,
-    `flight_number`      REAL NOT NULL,
-    `line_number`        INTEGER NOT NULL,
     `fiducial_number`    REAL NOT NULL,
     `datetime`           REAL NOT NULL,
     `date`               INTEGER NOT NULL,

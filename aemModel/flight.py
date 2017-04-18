@@ -9,6 +9,9 @@ class Flight:
 
     def __init__(self, flight_number):
         self._flight_number = flight_number
+        
+    def get_flight_number(self):
+        return self._flight_number
 
     def get_lines(self):
         return self._lines.values()

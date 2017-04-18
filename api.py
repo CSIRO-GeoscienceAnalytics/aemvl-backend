@@ -69,15 +69,15 @@ def api_upload():
                         
                         job_id = cursor.lastrowid
                         
-                        for flight in jobs.get_flights():
+                        for flight in job.get_flights():
                             cursor.execute('''
-                            INSERT INTO flight (flight_number) VALUES(?)''', (flight.get_flight_number(),))
+                            INSERT INTO flight (job_id, flight_number) VALUES(?, ?)''', (job_id, flight.get_flight_number(),))
                         
                             flight_id = cursor.lastrowid
 
                             for line in flight.get_lines():
                                 cursor.execute('''
-                                    INSERT INTO line (line_number) VALUES(?)''', (line.get_line_number(),))
+                                    INSERT INTO line (flight_id, line_number) VALUES(?, ?)''', (flight_id, line.get_line_number(),))
                                 
                                 line_id = cursor.lastrowid
                                 
@@ -86,16 +86,38 @@ def api_upload():
                                         INSERT INTO station (
                                             line_id,
                                             fiducial_number,
+                                            datetime,
+                                            date,
+                                            time,
+                                            angle_x,
+                                            angle_y,
+                                            height,
+                                            latitude,
+                                            longitude,
                                             easting,
                                             northing,
                                             elevation,
-                                            altitude) VALUES(?, ?, ?, ?, ?, ?)''', (
+                                            altitude,
+                                            ground_speed,
+                                            curr_1,
+                                            plni) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
                                             line_id,
                                             station.get_fiducial_number(),
+                                            station.get_datetime(),
+                                            station.get_date(),
+                                            station.get_time(),
+                                            station.get_angle_x(),
+                                            station.get_angle_y(),
+                                            station.get_height(),
+                                            station.get_latitude(),
+                                            station.get_longitude(),
                                             station.get_easting(),
                                             station.get_northing(),
                                             station.get_elevation(),
-                                            station.get_altitude()
+                                            station.get_altitude(),
+                                            station.get_ground_speed(),
+                                            station.get_curr_1(),
+                                            station.get_plni()
                                         )
                                     )
                                     
