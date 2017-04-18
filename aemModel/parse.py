@@ -33,8 +33,9 @@ class Parse:
             'ground_speed':     ['GdSpeed'],
             'curr_1':           ['Curr_1'],
             'plni':             ['PLNI'],
-            'hm_z':             ['HM_Z_\[([0-9]+)\]'],
-            'hm_x':             ['HM_X_\[([0-9]+)\]']
+            # TODO: Are hm_z and em_decay really the same thing? Probably not. Check with Aaron.
+            'em_decay':         ['HM_Z_\[([0-9]+)\]'],
+            'em_decay_error':   ['HM_X_\[([0-9]+)\]']
         }
 
         # Turn all aliases into regular expressions:
@@ -43,12 +44,12 @@ class Parse:
                 column_aliases[key][i] = re.compile(column_aliases[key][i])
 
         columns_dict = {
-            'hm_z': [],
-            'hm_x': []
+            'em_decay': [],
+            'em_decay_error': []
         }
         
-        hm_z_format = None
-        hm_x_format = None
+        em_decay_format = None
+        em_decay_error_format = None
         
         # Map columns from file to columns_dict:
         dataframe = pandas.read_csv(path, delim_whitespace=True)
@@ -57,14 +58,14 @@ class Parse:
                 for alias_regex in alias_regexes:
                     result = alias_regex.match(file_column)
                     if result:
-                        if key in ('hm_z', 'hm_x'):
+                        if key in ('em_decay', 'em_decay_error'):
                             index = int(result.groups()[0])
                             columns_dict[key].append(index)
                             
-                            if not hm_z_format and key == 'hm_z':
-                                hm_z_format = file_column.replace(str(index), '*')
-                            elif not hm_x_format and key == 'hm_x':
-                                hm_x_format = file_column.replace(str(index), '*')
+                            if not em_decay_format and key == 'em_decay':
+                                em_decay_format = file_column.replace(str(index), '*')
+                            elif not em_decay_error_format and key == 'em_decay_error':
+                                em_decay_error_format = file_column.replace(str(index), '*')
                         else:
                             columns_dict[key] = file_column
         
@@ -90,15 +91,14 @@ class Parse:
             print(row[columns_dict['curr_1']])
             print(row[columns_dict['plni']])
             """
-            
-            # TODO: Are em_decay and hm_z really the same thing? Probably not. Check with Aaron.
+
             em_decay = []
-            for i in columns_dict['hm_z']:
-                em_decay.append(float(row[hm_z_format.replace('*', str(i))]))
+            for i in columns_dict['em_decay']:
+                em_decay.append(float(row[em_decay_format.replace('*', str(i))]))
                 
             em_decay_error = []
-            for i in columns_dict['hm_x']:
-                em_decay_error.append(float(row[hm_x_format.replace('*', str(i))]))
+            for i in columns_dict['em_decay_error']:
+                em_decay_error.append(float(row[em_decay_error_format.replace('*', str(i))]))
 
             self.flight_factory.register_station(
                 line_number =       int(row[columns_dict['line_number']]),
