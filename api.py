@@ -158,7 +158,14 @@ def get_lines():
     
     with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
         result_set = pandas.read_sql(
-            'SELECT 1 as id, line_id, line_number FROM line',
+            ''' SELECT  1 AS id,
+                        station.fiducial_number AS fid,
+                        line.line_number,
+                        flight.flight_number,
+                        station.latitude || ' ' || station.longitude AS location
+                FROM    line
+                JOIN    flight ON flight.flight_id = line.flight_id
+                JOIN    station ON station.line_id = line.line_id''',
             connection,
             index_col = 'id')
 
@@ -169,7 +176,9 @@ def get_lines():
                 html = result_set.to_html(
                     index = False,
                     formatters = [
-                        lambda line_id: "<a href='{}'>{}</a>".format(url_for('get_stations', line_id = line_id), line_id),
+                        str,
+                        lambda line_number: "<a href='{}'>{}</a>".format(url_for('get_measurements', line_number = line_number), line_number),
+                        str,
                         str],
                         escape = False))
         elif output_type == CSV_TYPE:
@@ -177,6 +186,44 @@ def get_lines():
         else:
             return 'Unsupported output type specified: ' + str(output_type)
 
+@app.route('/api/getMeasurements', defaults={'line_number': None}, methods=['POST'])
+@app.route('/api/getMeasurements/<line_number>')
+def get_measurements(line_number):
+    output_type = get_preferred_output_type()
+    
+    if request.method == 'POST':
+        line_number = request.form['line_number']
+    
+    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
+        result_set = pandas.read_sql('''
+            SELECT  station.fiducial_number AS fid,
+                    station.time,
+                    (
+                        SELECT   GROUP_CONCAT(em_decay, ' ')
+                        FROM     measurement
+                        WHERE    station_id = station.station_id
+                        GROUP BY station_id
+                        ORDER BY sequence ASC
+                    ) AS em
+            FROM    station
+            JOIN    line on line.line_id = station.line_id
+            WHERE   line.line_number =  ?''',
+            connection,
+            params = [line_number])
+
+        if output_type == HTML_TYPE:
+            return render_template(
+                "dataframe_to_table.html",
+                title = 'Measurements',
+                html = result_set.to_html(
+                    index = False,
+                    escape = False))
+        elif output_type == CSV_TYPE:
+            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
+        else:
+            return 'Unsupported output type specified: ' + str(output_type)
+
+"""
 @app.route('/api/getStations', defaults={'line_id': None}, methods=['POST'])
 @app.route('/api/getStations/<line_id>')
 def get_stations(line_id):
@@ -264,6 +311,7 @@ def get_measurements(station_id):
             return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
         else:
             return 'Unsupported output type specified: ' + str(output_type)
+"""
 
 @app.route('/api/clean_session')
 def clean_session():
