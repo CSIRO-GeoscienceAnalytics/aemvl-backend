@@ -9,5 +9,7 @@ Run the following commands:
 `source activate aemvl-backend`  
 `conda install --file requirements.txt`  
 `cd aemvl-backend`  
+`cp aemvl-backend.config.default aemvl-backend.config`  
+`# Edit the settings in aemvl-backend.config`  
 `python skeleton.py`  
 `python main.py`
