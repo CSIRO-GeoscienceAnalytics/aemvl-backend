@@ -103,3 +103,30 @@ class Parse:
             )
 
         return self.model_factory.build_model()
+
+""" Example code for conversion.
+from osgeo import ogr, osr
+
+pointX = 463335.71
+pointY = 6197553.61
+
+# Spatial Reference System
+inputEPSG = 28354
+outputEPSG = 4326
+
+# create a geometry from coordinates
+point = ogr.Geometry(ogr.wkbPoint)
+point.AddPoint(pointX, pointY)
+
+inSpatialRef = osr.SpatialReference()
+inSpatialRef.ImportFromEPSG(inputEPSG)
+
+outSpatialRef = osr.SpatialReference()
+outSpatialRef.ImportFromEPSG(outputEPSG)
+
+coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef)
+
+point.Transform(coordTransform)
+
+print(point.GetX(), point.GetY())
+"""
