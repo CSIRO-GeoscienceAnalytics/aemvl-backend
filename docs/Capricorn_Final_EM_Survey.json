@@ -1,0 +1,129 @@
+{
+    "DataDefinition": 
+    {
+        "Line":                 1,
+        "Flight":               2,
+        "Fiducial":             3,
+        "Project_CGG":          4,
+        "Project_GA":           5,
+        "Aircraft":             6,
+        "Date":                 7,
+        "Time":                 8,
+        "Time_Secs_Week":       9,
+        "Bearing":             10,
+        "Latitude":            11,
+        "Longitude":           12,
+        "Easting":             13,
+        "Northing":            14,
+        "Pressure":            15,
+        "Temperature":         16,
+        "Lidar_Raw":           17,
+        "Lidar":               18,
+        "Radalt":              19,
+        "Tx_Elevation":        20,
+        "GPSalt":              21,
+        "GPSalt_AHD":          22,
+        "DTM_AHD":             23,
+        "DTM":                 24,
+        "FluxgateX":           25,
+        "FluxgateY":           26,
+        "FluxgateZ":           27,
+        "Diurnal":             28,
+        "UnCompMag":           29,
+        "CompMag":             30,
+        "Mag":                 31,
+        "Tx_Roll":             32,
+        "Tx_Pitch":            33,
+        "Tx_Clearance":        34,
+        "HSep_Raw":            35,
+        "VSep_Raw":            36,
+        "HSep_gps":            37,
+        "VSep_gps":            38,
+        "TSep_gps":            39,
+        "HSep_std":            40,
+        "VSep_std":            41,
+        "Tx_Clearance_std":    42,
+        "Flag_Birdgps":        43,
+        "EMX_nonhprg":   [44, 58],
+        "EMZ_nonhprg":   [59, 73],
+        "EMX_hprg":      [73, 87],
+        "EMZ_hprg":     [88, 102],
+        "EMX_final":   [103, 117],
+        "EMZ_final":   [118, 132],
+        "X_Geofact":          133,
+        "Z_Geofact":          134,
+        "X_LowFreq":          135,
+        "Z_LowFreq":          136,
+        "X_PrimaryField":     137,
+        "Z_PrimaryField":     138,
+        "X_Powerline":        139,
+        "Z_Powerline":        140,
+        "X_Sferics":          141,
+        "Z_Sferics":          142,
+        "X_VLF1":             143,
+        "Z_VLF1":             144,
+        "X_VLF2":             145,
+        "Z_VLF2":             146,
+        "X_VLF3":             147,
+        "Z_VLF3":             148,
+        "X_VLF4":             149,
+        "Z_VLF4":             150
+    },
+    
+    "FlightPlanInfo":
+    {
+        "CoordinateSystem": "GDA84",        
+        "XComponent": "Longitude",          
+        "YComponent": "Latitude",
+        "TxHeight": "Lidar",
+        "TxElevation": "Tx_Elevation",
+        "DigitalElevationModel": "DTM"
+        "Fiducial": "Fiducial",             
+    },
+    
+    
+    "EMInfo": 
+    [{
+        "Name": "B Field",
+        "Components":
+        [{
+            "Name": "EMZ_nonhprg",
+            "Descriptor":
+            {
+                "AdditiveError": [0.0267, 0.0160, 0.0141, 0.0134, 0.0122, 0.0123, 0.0117, 0.0118, 0.0110, 0.0102, 0.0099, 0.0084, 0.0075, 0.0070, 0.0087],
+                "MultiplicativeError": [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03],
+                "Time": [0.000013, 0.000040, 0.000067, 0.000107, 0.000173, 0.000280, 0.000453, 0.000720, 0.001120, 0.001733, 0.002693, 0.004200, 0.006560, 0.010200, 0.016200],
+                "RemoveChannels": []
+            }
+        },
+        {
+            "Name": "EMX_nonhprg",
+            "Descriptor":
+            {
+                "AdditiveError": [0.0362, 0.0348, 0.0315, 0.0260, 0.0238, 0.0206, 0.0190, 0.0182, 0.0176, 0.0174, 0.0170, 0.0163, 0.0146, 0.0126, 0.0134],
+                "MultiplicativeError": [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03],
+                "Time": [0.000013, 0.000040, 0.000067, 0.000107, 0.000173, 0.000280, 0.000453, 0.000720, 0.001120, 0.001733, 0.002693, 0.004200, 0.006560, 0.010200, 0.016200],
+                "RemoveChannels": []
+            }
+        }]
+    }],
+
+    "ExportForInversion":
+    [
+        "Easting", 
+        "Northing", 
+        "DTM",
+        "Tx_Elevation",
+        "Lidar",
+        "Tx_Roll",
+        "Tx_Pitch",
+        "Tx_Clearance",
+        "HSep_Raw",
+        "VSep_Raw",
+        "HSep_gps",
+        "VSep_gps",
+        "TSep_gps",
+        "X_PrimaryField",
+        "Z_PrimaryField"
+    ]
+}
