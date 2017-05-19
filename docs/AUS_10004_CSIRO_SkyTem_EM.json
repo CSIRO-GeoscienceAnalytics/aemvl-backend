@@ -34,8 +34,8 @@
         "YComponent": "Latitude",
         "TxHeight": "TxHeight",
         "TxElevation": "TxElevation",
-        "DigitalElevationModel": "DEM"
-        "Fiducial": "Fiducial",             
+        "DigitalElevationModel": "DEM",
+        "Fiducial": "Fiducial"
     },
     
     
