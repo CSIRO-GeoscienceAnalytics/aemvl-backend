@@ -1,9 +1,9 @@
 { 
     "DataDefinition": 
     {
-        "JobNumber": 1,
-        "Fiducial": 2,
-        "LineNumber": 3, 
+        "LineNumber": 1, 
+        "JobNumber": 2,
+        "Fiducial": 3,
         "FlightNumber": 4,
         "DateTime": 5,
         "Date": 6, 
@@ -24,13 +24,13 @@
         "PLNI": 73,
         "LM_Current": 74,
         "LM_Z": [75, 94],
-        "LM_X": [95, 114]
+        "LM_X": [95, 98]
     },
     
     "FlightPlanInfo":
     {
-        "CoordinateSystem": "WGS84",        
-        "XComponent": "Longitude",          
+        "CoordinateSystem": 4326,
+        "XComponent": "Longitude",
         "YComponent": "Latitude",
         "TxHeight": "TxHeight",
         "TxElevation": "TxElevation",

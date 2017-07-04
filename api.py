@@ -4,17 +4,18 @@ import sqlite3
 import uuid
 import pandas
 from shutil import copyfile
-from aemModel.parse import Parse
 from flask import request, session, redirect, url_for, send_from_directory, render_template, Response
 from app import app
 from werkzeug.utils import secure_filename
+from osgeo import ogr, osr
+import pathlib
+import json
 
-DB_FILE_PATH = 'session/'
+outSpatialRef4326 = osr.SpatialReference()
+outSpatialRef4326.ImportFromEPSG(4326)
 CSV_TYPE = 1
 HTML_TYPE = 2
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+project_id = None
 
 def get_preferred_output_type():
     accept_headers = request.headers.get('Accept').split(',')
@@ -24,300 +25,191 @@ def get_preferred_output_type():
     elif 'text/html' in accept_headers:
         return HTML_TYPE
     else:
-        return None
+        raise Exception("Unsupported accept header provided: " + str(accept_headers))
 
-@app.route("/")
-def hello():
-    return redirect(url_for("api")) 
+# Look up a DataDefinition column name in the FlightPlanInfo object to see if it is
+# an alias of a well-known name. If it is we will return the well-known name, otherwise
+# return the original name:
+def getColumnWellKnownName(column_name):
+    for well_known_name, alias in session['projects'][project_id]['flight_plan_info'].items():
+        if column_name == alias:
+            return well_known_name
 
-@app.route("/api")
-def api():
-    return render_template("api.html")
+    return column_name        
 
-@app.route('/api/upload', methods=['GET', 'POST'])
+def getColumnNameByNumber(number):
+    for column_name, column_number in session['projects'][project_id]['data_definition'].items():
+        if isinstance(column_number, int) and number == column_number:
+            return getColumnWellKnownName(column_name)
+        if isinstance(column_number, list) and number in column_number:
+            if column_name not in session['projects'][project_id]['component_column_offsets']:
+                # This has to be cast to a normal int otherwise it ends up as numpy.int64 which can't be serialised into the session:
+                session['projects'][project_id]['component_column_offsets'][column_name] = int(number - 1)
+
+            return column_name + "_" + str(number - session['projects'][project_id]['component_column_offsets'][column_name])
+
+def createLocation4326(x_component, y_component):
+    # If we're already using WGS84 / 4326 we don't need to perform a conversion:
+    if session['projects'][project_id]['flight_plan_info']["CoordinateSystem"] in ['WGS84', 4326]:
+        return str(x_component) + " " + str(y_component)
+    else:
+        # TODO: I'm assuming that flight_plan_info["CoordinateSystem"] will be an EPSG number, not a name like GDA84, WGS84
+        inputEPSG = session['projects'][project_id]['flight_plan_info']["CoordinateSystem"]
+
+        # create a geometry from coordinates
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint(x_component, y_component)
+
+        inSpatialRef = osr.SpatialReference()
+        inSpatialRef.ImportFromEPSG(inputEPSG)
+
+        coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef4326)
+        point.Transform(coordTransform)
+
+        return str(point.GetX()) + " " + str(point.GetY())
+
+def getComponentColumnNames(component_name):
+    if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
+        column_suffixes = list(range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name], 
+            len(session['projects'][project_id]['data_definition'][component_name]) + 1))
+        return [component_name + "_" + str(n) for n in column_suffixes]
+    else:
+        return component_name
+
+@app.route('/api/upload', methods=['POST'])
 def api_upload():
-    output_type = get_preferred_output_type()
+    global project_id
+    project_id = request.form["project_id"]
     
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file_handle = request.files['file']
-        
-        if file_handle.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        if file_handle and allowed_file(file_handle.filename):
-            filename = secure_filename(file_handle.filename)
-
-            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file_handle.save(path)
-            jobs = Parse().parse_file(path)
-            
-            try:
-                session['database_guid'] = str(uuid.uuid1())
-
-                copyfile('skeleton.db', DB_FILE_PATH + session['database_guid'])
-                with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-                    cursor = connection.cursor()
-                    
-                    for job in jobs:
-                        cursor.execute('''
-                            INSERT INTO job (job_number) VALUES(?)''', (job.get_job_number(),))
-                        
-                        job_id = cursor.lastrowid
-                        
-                        for flight in job.get_flights():
-                            cursor.execute('''
-                            INSERT INTO flight (job_id, flight_number) VALUES(?, ?)''', (job_id, flight.get_flight_number(),))
-                        
-                            flight_id = cursor.lastrowid
-
-                            for line in flight.get_lines():
-                                cursor.execute('''
-                                    INSERT INTO line (flight_id, line_number) VALUES(?, ?)''', (flight_id, line.get_line_number(),))
-                                
-                                line_id = cursor.lastrowid
-                                
-                                for station in line.get_stations():
-                                    cursor.execute('''
-                                        INSERT INTO station (
-                                            line_id,
-                                            fiducial_number,
-                                            datetime,
-                                            date,
-                                            time,
-                                            angle_x,
-                                            angle_y,
-                                            height,
-                                            latitude,
-                                            longitude,
-                                            easting,
-                                            northing,
-                                            elevation,
-                                            altitude,
-                                            ground_speed,
-                                            curr_1,
-                                            plni) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
-                                            line_id,
-                                            station.get_fiducial_number(),
-                                            station.get_datetime(),
-                                            station.get_date(),
-                                            station.get_time(),
-                                            station.get_angle_x(),
-                                            station.get_angle_y(),
-                                            station.get_height(),
-                                            station.get_latitude(),
-                                            station.get_longitude(),
-                                            station.get_easting(),
-                                            station.get_northing(),
-                                            station.get_elevation(),
-                                            station.get_altitude(),
-                                            station.get_ground_speed(),
-                                            station.get_curr_1(),
-                                            station.get_plni()
-                                        )
-                                    )
-                                    
-                                    station_id = cursor.lastrowid
-                                    
-                                    em_decay = station.get_em_decay()
-                                    em_decay_error = station.get_em_decay_error()
-                                    
-                                    measurements = []
-                                    for i in range(len(em_decay)):
-                                        measurements.append((station_id, em_decay[i], em_decay_error[i], i + 1))
-                                    
-                                    cursor.executemany('''
-                                        INSERT INTO measurement (
-                                            station_id,
-                                            em_decay,
-                                            em_decay_error,
-                                            sequence) VALUES(?, ?, ?, ?)''', measurements
-                                    )
-
-                    connection.commit()
-            except Exception as e:
-                app.logger.error(e)
-            finally:
-                pass
-                # file_handle.unlink() TODO: remove the uploaded file.
-
-            if output_type == HTML_TYPE:
-                return redirect(url_for('api'))
-            elif output_type == CSV_TYPE:
-                return "file uploaded"            
-
-    return render_template("upload.html")
-
-@app.route('/api/getLines', methods=['GET', 'POST'])
-def get_lines():
+    # TODO: Use output_type
     output_type = get_preferred_output_type()
+
+    # check that the POST request is complete:
+    if 'datafile' not in request.files:
+        return "error: datafile not provided"
+
+    if 'configfile' not in request.files:
+        return "error: configfile not provided"
+
+    if 'project_id' not in request.form:
+        return "error: project_id not provided"
     
-    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
+    # Create the session if it doesn't exist:
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid1())
+        session['projects'] = {}
+
+    project_path = os.path.join(app.config['UPLOAD_FOLDER'], session['session_id'], project_id)
+    pathlib.Path(project_path).mkdir(parents=True)
+    
+    session['projects'][project_id] = {'project_path': project_path}
+
+    datafile_handle = request.files['datafile']
+    datafile_path = os.path.join(project_path, 'data.xyz')
+    datafile_handle.save(datafile_path)
+
+    configfile_handle = request.files['configfile']
+    configfile_path = os.path.join(project_path, 'config.json')
+    configfile_handle.save(configfile_path)
+    
+    json_content = None
+    data_definition = None
+    flight_plan_info = None
+
+    with open(configfile_path) as json_file_handle:
+        json_content = json.load(json_file_handle)
+
+    data_definition = json_content["DataDefinition"]
+    for column_name, column_number in data_definition.items():
+        if isinstance(column_number, list):
+            data_definition[column_name] = list(range(column_number[0], column_number[1]+1))
+
+    flight_plan_info = json_content["FlightPlanInfo"]
+    flight_plan_info["CoordinateSystem"] = flight_plan_info["CoordinateSystem"].upper() if isinstance(flight_plan_info["CoordinateSystem"], str) else flight_plan_info["CoordinateSystem"]
+
+    session['projects'][project_id]['flight_plan_info'] = flight_plan_info
+    session['projects'][project_id]['em_info'] = json_content["EMInfo"]
+    session['projects'][project_id]['export_for_inversion'] = json_content["ExportForInversion"]
+    session['projects'][project_id]['data_definition'] = data_definition
+    session['projects'][project_id]['component_column_offsets'] = {}
+
+    dataframe = pandas.read_csv(datafile_path, header=None, delim_whitespace=True)
+
+    # Apply the names to the columns:
+    dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1), inplace=True)
+    dataframe['LOCATION_4326'] = dataframe.apply(lambda row: createLocation4326(row['XComponent'], row['YComponent']), axis=1)
+
+    # Add a '_mask' column for every column that was generated from a list in the DataDefinition:
+    for key, value in session['projects'][project_id]['data_definition'].items():
+        if isinstance(value, list):
+            for column_number in value:
+                dataframe[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
+
+    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+        dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
+
+    return Response(project_id, mimetype = 'text/plain')
+
+# Used to create the map with all the flight lines:
+@app.route('/api/getLines', methods=['POST'])
+def getLines():
+    global project_id
+    project_id = request.form["project_id"]
+    
+    # TODO: Use output_type
+    output_type = get_preferred_output_type()
+
+    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         result_set = pandas.read_sql(
-            ''' SELECT  1 AS id,
-                        station.fiducial_number AS fid,
-                        line.line_number,
-                        flight.flight_number,
-                        station.latitude || ' ' || station.longitude AS location
-                FROM    line
-                JOIN    flight ON flight.flight_id = line.flight_id
-                JOIN    station ON station.line_id = line.line_id''',
-            connection,
-            index_col = 'id')
+            ''' SELECT  LineNumber,
+                        Fiducial,
+                        LOCATION_4326
+                FROM    dataframe''',
+            connection)
 
-        if output_type == HTML_TYPE:
-            return render_template(
-                "dataframe_to_table.html",
-                title = 'Lines',
-                html = result_set.to_html(
-                    index = False,
-                    formatters = [
-                        str,
-                        lambda line_number: "<a href='{}'>{}</a>".format(url_for('get_measurements', line_number = line_number), line_number),
-                        str,
-                        str],
-                        escape = False))
-        elif output_type == CSV_TYPE:
-            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
-        else:
-            return 'Unsupported output type specified: ' + str(output_type)
+        return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
 
-@app.route('/api/getMeasurements', defaults={'line_number': None}, methods=['POST'])
-@app.route('/api/getMeasurements/<line_number>')
-def get_measurements(line_number):
+# Used to create the multi-line graph:
+@app.route('/api/getLine', methods=['POST'])
+def getLine():
+    global project_id
+    project_id = request.form["project_id"]
+    line_number = int(request.form["line_number"])
+    column_names = request.form["column_names"].split(',')
+    
+    
+    #column_names = column_names if isinstance(column_names, list) else [column_names]
+    
+    # TODO: Use output_type
     output_type = get_preferred_output_type()
-    
-    if request.method == 'POST':
-        line_number = request.form['line_number']
-    
-    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-        result_set = pandas.read_sql('''
-            SELECT  station.fiducial_number AS fid,
-                    station.time,
-                    (
-                        SELECT   GROUP_CONCAT(em_decay, ' ')
-                        FROM     measurement
-                        WHERE    station_id = station.station_id
-                        GROUP BY station_id
-                        ORDER BY sequence ASC
-                    ) AS em
-            FROM    station
-            JOIN    line on line.line_id = station.line_id
-            WHERE   line.line_number =  ?''',
-            connection,
-            params = [line_number])
 
-        if output_type == HTML_TYPE:
-            return render_template(
-                "dataframe_to_table.html",
-                title = 'Measurements',
-                html = result_set.to_html(
-                    index = False,
-                    escape = False))
-        elif output_type == CSV_TYPE:
-            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
-        else:
-            return 'Unsupported output type specified: ' + str(output_type)
-
-"""
-@app.route('/api/getStations', defaults={'line_id': None}, methods=['POST'])
-@app.route('/api/getStations/<line_id>')
-def get_stations(line_id):
-    output_type = get_preferred_output_type()
-    
-    bbox_clause = ''
-    
-    if request.method == 'POST':
-        line_id = request.form['line_id']
+    first = True
+    select_sql = ''
+    for column_name in column_names:
+        select_sql = select_sql + ('' if first else ',')
+        full_column_names = getComponentColumnNames(column_name)
         
-        if ('easting_min' in request.form and
-            'easting_max' in request.form and
-            'northing_min' in request.form and
-            'northing_max' in request.form):
-
-            bbox_clause = '''
-                AND easting BETWEEN {0} AND {1}
-                AND northing BETWEEN {2} AND {3}
-            '''.format(
-                float(request.form['easting_min']),
-                float(request.form['easting_max']),
-                float(request.form['northing_min']),
-                float(request.form['northing_max']))
-
-    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-        result_set = pandas.read_sql('''
-            SELECT  1 as id,
-                    station_id,
-                    fiducial_number,
-                    easting,
-                    northing,
-                    elevation,
-                    altitude
-            FROM    station
-            WHERE   line_id = ?''' + bbox_clause,
-            connection,
-            params = [line_id],
-            index_col = 'id')
+        if isinstance(full_column_names, list):
+            format_string = "printf('" + " ".join(['%g'] * len(full_column_names)) + "'," 
             
-        if output_type == HTML_TYPE:
-            return render_template(
-                "dataframe_to_table.html",
-                title = 'Stations',
-                html = result_set.to_html(
-                    index = False,
-                    formatters = [
-                        lambda station_id: "<a href='{}'>{}</a>".format(url_for('get_measurements', station_id = station_id), station_id),
-                        str,
-                        str,
-                        str,
-                        str,
-                        str],
-                        escape = False))
-        elif output_type == CSV_TYPE:
-            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
+            select_sql = select_sql + format_string + ",".join(full_column_names) + ") AS " + column_name
+            
+            # If we have a list we'll also fetch the mask back:
+            select_sql = select_sql + ", " + format_string + "_mask,".join(full_column_names) + "_mask) AS " + column_name + "_mask"
         else:
-            return 'Unsupported output type specified: ' + str(output_type)
+            select_sql = select_sql + full_column_names
 
-@app.route('/api/getMeasurements', defaults={'station_id': None}, methods=['POST'])
-@app.route('/api/getMeasurements/<station_id>')
-def get_measurements(station_id):
-    output_type = get_preferred_output_type()
+        first = False
+
+    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+        sql = '''SELECT  ''' + select_sql + '''
+                FROM    dataframe
+                WHERE   LineNumber = ''' + str(line_number)
+
+        result_set = pandas.read_sql(sql, connection)
+
+        return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
+
     
-    if request.method == 'POST':
-        station_id = request.form['station_id']
     
-    with sqlite3.connect(DB_FILE_PATH + session['database_guid']) as connection:
-        result_set = pandas.read_sql('''
-            SELECT  em_decay,
-                    em_decay_error
-            FROM    measurement
-            WHERE   station_id = ?
-            ORDER BY sequence''',
-            connection,
-            params = [station_id])
-
-        if output_type == HTML_TYPE:
-            return render_template(
-                "dataframe_to_table.html",
-                title = 'Measurements',
-                html = result_set.to_html(
-                    index = False,
-                    escape = False))
-        elif output_type == CSV_TYPE:
-            return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
-        else:
-            return 'Unsupported output type specified: ' + str(output_type)
-"""
-
-@app.route('/api/clean_session')
-def clean_session():
-    session.clear()
-    return "clean"
-
-@app.route('/api/show_session')
-def show_session():
-    return_value = str(session['database_guid']) if ('database_guid' in session) else ''
-    return render_template("show_session.html", session = return_value)
+    

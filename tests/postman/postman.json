@@ -1,13 +1,11 @@
 {
-  "id": "96993a79-323a-d915-1e2f-d7c1f858b914",
+  "id": "c0ffee00-beef-dead-f00d-baddadfeedaa",
   "name": "CAPDF-AEM",
   "description": "",
   "order": [
-    "351ac604-1e4a-e1bd-0dda-a6462f320375",
-    "8008616d-ddc2-41b2-cd4b-4cb5d4825fca",
-    "aaaaaaaa-da98-7002-58b0-c89e2219c342",
-    "f9b3bb59-da98-7002-58b0-c89e2219c342",
-    "9c0bfcb8-4e8a-62d0-dc24-ffbce4f3d8c0"
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002",
+    "00000000-0000-0000-0000-000000000003"
   ],
   "folders": [],
   "timestamp": 1491374952066,
@@ -15,7 +13,7 @@
   "public": false,
   "requests": [
     {
-      "id": "351ac604-1e4a-e1bd-0dda-a6462f320375",
+      "id": "00000000-0000-0000-0000-000000000001",
       "headers": ["Accept: text/csv"],
       "url": "http://conda:8080/api/upload",
       "pathVariables": [],
@@ -24,9 +22,21 @@
       "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914",
       "data": [
         {
-          "key": "file",
-          "value": "../../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ",
+          "key": "datafile",
+          "value": "../../docs/ExampleTempestData.From.Client.xyz",
           "type": "file",
+          "enabled": true
+        },
+        {
+          "key": "configfile",
+          "value": "../../docs/AUS_10004_CSIRO_SkyTem_EM.json",
+          "type": "file",
+          "enabled": true
+        },
+        {
+          "key": "project_id",
+          "value": "TESTPROJECT",
+          "type": "string",
           "enabled": true
         }
       ],
@@ -39,22 +49,29 @@
       "responses": [],
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches confirmation\"] = responseBody.has(\"file uploaded\");"
+        "tests[\"Body matches confirmation\"] = responseBody.has(\"TESTPROJECT\");"
       ],
       "currentHelper": "normal",
       "helperAttributes": []
     },
     {
-      "id": "8008616d-ddc2-41b2-cd4b-4cb5d4825fca",
+      "id": "00000000-0000-0000-0000-000000000002",
       "url": "http://conda:8080/api/getLines",
       "method": "POST",
       "headers": ["Accept: text/csv"],
-      "data": null,
+      "data": [
+        {
+          "key": "project_id",
+          "value": "TESTPROJECT",
+          "type": "string",
+          "enabled": true
+        }
+      ],
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"line_id,line_number\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"200001\");"
+        "tests[\"Body matches header row\"] = responseBody.has(\"LineNumber,Fiducial,LOCATION_4326\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"10011,15682.8,120.0 0.52\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -66,115 +83,44 @@
       "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914"
     },
     {
-      "id": "aaaaaaaa-da98-7002-58b0-c89e2219c342",
-      "url": "http://conda:8080/api/getStations",
+      "id": "00000000-0000-0000-0000-000000000003",
+      "url": "http://conda:8080/api/getLine",
       "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
         {
-          "key": "line_id",
-          "value": "1",
-          "type": "text",
+          "key": "project_id",
+          "value": "TESTPROJECT",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "line_number",
+          "value": "10030",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "column_names",
+          "value": "HM_Z,PLNI",
+          "type": "string",
           "enabled": true
         }
       ],
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"station_id,fiducial_number,easting,northing,elevation,altitude\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"261067.9,463809.66,6196878.91,41.51,98.69\");"
+        "tests[\"Body matches header row\"] = responseBody.has(\"HM_Z,HM_Z_mask,PLNI\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"1.36176 1.18708 1.01438 0.845952 0.693912\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
       "pathVariables": [],
       "version": 2,
-      "name": "http://conda:8080/api/getStations",
+      "name": "http://conda:8080/api/getLine",
       "description": "",
       "descriptionFormat": "html",
-      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914"
-    },
-    {
-      "id": "f9b3bb59-da98-7002-58b0-c89e2219c342",
-      "url": "http://conda:8080/api/getStations",
-      "method": "POST",
-      "headers": ["Accept: text/csv"],
-      "data": [
-        {
-          "key": "line_id",
-          "value": "1",
-          "type": "float",
-          "enabled": true
-        },
-        {
-          "key": "easting_min",
-          "value": "460000",
-          "type": "float",
-          "enabled": true
-        },
-        {
-          "key": "easting_max",
-          "value": "470000",
-          "type": "float",
-          "enabled": true
-        },
-        {
-          "key": "northing_min",
-          "value": "6196897",
-          "type": "float",
-          "enabled": true
-        },
-        {
-          "key": "northing_max",
-          "value": "6197584",
-          "type": "float",
-          "enabled": true
-        }
-      ],
-      "dataMode": "params",
-      "tests": [
-        "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"station_id,fiducial_number,easting,northing,elevation,altitude\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"27,194274.4,463328.5,6197567.16,39.64,96.51\");"
-      ],
-      "preRequestScript": null,
-      "currentHelper": "normal",
-      "pathVariables": [],
-      "version": 2,
-      "name": "http://conda:8080/api/getStations (Using spatial constraints)",
-      "description": "",
-      "descriptionFormat": "html",
-      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914"
-    },
-    {
-      "id": "9c0bfcb8-4e8a-62d0-dc24-ffbce4f3d8c0",
-      "headers": ["Accept: text/csv"],
-      "url": "http://conda:8080/api/getMeasurements",
-      "pathVariables": [],
-      "preRequestScript": null,
-      "method": "POST",
-      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914",
-      "data": [
-        {
-          "key": "station_id",
-          "value": "10",
-          "type": "text",
-          "enabled": true
-        }
-      ],
-      "dataMode": "params",
-      "name": "http://conda:8080/api/getMeasurements",
-      "description": "",
-      "descriptionFormat": "html",
-      "time": 1491374997169,
-      "version": 2,
-      "responses": [],
-      "tests": [
-        "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"em_decay,em_decay_error\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"236.62900000000002,-47.5937\");"
-      ],
-      "currentHelper": "normal",
-      "helperAttributes": []
+      "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
     }
   ]
 }
