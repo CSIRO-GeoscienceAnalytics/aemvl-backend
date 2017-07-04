@@ -173,10 +173,7 @@ def getLine():
     project_id = request.form["project_id"]
     line_number = int(request.form["line_number"])
     column_names = request.form["column_names"].split(',')
-    
-    
-    #column_names = column_names if isinstance(column_names, list) else [column_names]
-    
+
     # TODO: Use output_type
     output_type = get_preferred_output_type()
 
@@ -207,6 +204,5 @@ def getLine():
 
         return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
 
-    
     
     
