@@ -1,5 +1,4 @@
 UPLOAD_FOLDER='./uploads'
-ALLOWED_EXTENSIONS=set(['xyz'])
 DEBUG=True
 SECRET_KEY='Change secret key here.'
 
