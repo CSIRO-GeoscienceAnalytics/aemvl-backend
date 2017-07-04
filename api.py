@@ -1,12 +1,9 @@
 import os
-import sys
 import sqlite3
 import uuid
 import pandas
-from shutil import copyfile
-from flask import request, session, redirect, url_for, send_from_directory, render_template, Response
+from flask import request, session, redirect, Response
 from app import app
-from werkzeug.utils import secure_filename
 from osgeo import ogr, osr
 import pathlib
 import json
