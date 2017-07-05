@@ -23,7 +23,7 @@
       "data": [
         {
           "key": "datafile",
-          "value": "../../docs/ExampleTempestData.From.Client.xyz",
+          "value": "../../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ",
           "type": "file",
           "enabled": true
         },
@@ -71,7 +71,7 @@
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
         "tests[\"Body matches header row\"] = responseBody.has(\"LineNumber,Fiducial,LOCATION_4326\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"10011,15682.8,120.0 0.52\");"
+        "tests[\"Body matches known data\"] = responseBody.has(\"200301,261068.6,140.606238 -34.368704\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -96,7 +96,7 @@
         },
         {
           "key": "line_number",
-          "value": "10030",
+          "value": "200301",
           "type": "string",
           "enabled": true
         },
@@ -111,7 +111,7 @@
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
         "tests[\"Body matches header row\"] = responseBody.has(\"HM_Z,HM_Z_mask,PLNI\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"1.36176 1.18708 1.01438 0.845952 0.693912\");"
+        "tests[\"Body matches known data\"] = responseBody.has(\"542.27 481.786 408.923 340.026\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
