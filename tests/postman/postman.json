@@ -5,7 +5,9 @@
   "order": [
     "00000000-0000-0000-0000-000000000001",
     "00000000-0000-0000-0000-000000000002",
-    "00000000-0000-0000-0000-000000000003"
+    "00000000-0000-0000-0000-000000000003",
+    "00000000-0000-0000-0000-000000000004",
+    "00000000-0000-0000-0000-000000000005"
   ],
   "folders": [],
   "timestamp": 1491374952066,
@@ -19,7 +21,7 @@
       "pathVariables": [],
       "preRequestScript": null,
       "method": "POST",
-      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914",
+      "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa",
       "data": [
         {
           "key": "datafile",
@@ -80,7 +82,7 @@
       "name": "http://conda:8080/api/getLines",
       "description": "",
       "descriptionFormat": "html",
-      "collectionId": "96993a79-323a-d915-1e2f-d7c1f858b914"
+      "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
     },
     {
       "id": "00000000-0000-0000-0000-000000000003",
@@ -110,8 +112,92 @@
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"HM_Z,HM_Z_mask,PLNI\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"542.27 481.786 408.923 340.026\");"
+        "tests[\"Body matches header row\"] = responseBody.has(\"Fiducial,HM_Z,HM_Z_mask,PLNI\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"261069.7,562.335 499.761 424.916 353.483\");"
+      ],
+      "preRequestScript": null,
+      "currentHelper": "normal",
+      "pathVariables": [],
+      "version": 2,
+      "name": "http://conda:8080/api/getLine",
+      "description": "",
+      "descriptionFormat": "html",
+      "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "url": "http://conda:8080/api/applyMask",
+      "method": "POST",
+      "headers": ["Accept: text/csv"],
+      "data": [
+        {
+          "key": "project_id",
+          "value": "TESTPROJECT",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "line_number",
+          "value": "200301",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "component_name",
+          "value": "HM_Z",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "fiducials_and_masks",
+          "value": "[[261069.7,[0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]],[261069.6,[0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]]]",
+          "type": "string",
+          "enabled": true
+        }
+      ],
+      "dataMode": "params",
+      "tests": [
+        "tests[\"Status code is 200\"] = responseCode.code === 200;",
+        "tests[\"Body matches known data\"] = responseBody.has(\"changes applied\");"
+      ],
+      "preRequestScript": null,
+      "currentHelper": "normal",
+      "pathVariables": [],
+      "version": 2,
+      "name": "http://conda:8080/api/applyMask",
+      "description": "",
+      "descriptionFormat": "html",
+      "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "url": "http://conda:8080/api/getLine",
+      "method": "POST",
+      "headers": ["Accept: text/csv"],
+      "data": [
+        {
+          "key": "project_id",
+          "value": "TESTPROJECT",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "line_number",
+          "value": "200301",
+          "type": "string",
+          "enabled": true
+        },
+        {
+          "key": "column_names",
+          "value": "HM_Z,PLNI",
+          "type": "string",
+          "enabled": true
+        }
+      ],
+      "dataMode": "params",
+      "tests": [
+        "tests[\"Status code is 200\"] = responseCode.code === 200;",
+        "tests[\"Body matches known data\"] = responseBody.has(\"0 -1 0 0 0 -1 0 0 0 -1 0 0 0 -1 0 -1 0 0 0 0 0 0 -1 0 0 -1 0\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
