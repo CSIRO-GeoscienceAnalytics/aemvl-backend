@@ -24,7 +24,7 @@ openssl=1.0.2k=1
 pandas=0.19.2=np112py35_1
 pip=9.0.1=py35_1
 proj4=4.9.2=0
-python=3.5.3=1
+python=3.4.5=1
 python-dateutil=2.6.0=py35_0
 pytz=2017.2=py35_0
 readline=6.2=2
