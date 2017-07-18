@@ -1,4 +1,3 @@
-#!/opt/miniconda3/envs/aemvl-backend/bin/python
 import site
 site.addsitedir('/opt/miniconda3/envs/aemvl-backend/lib/python3.5/site-packages')
 
