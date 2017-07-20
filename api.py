@@ -184,15 +184,21 @@ def getLine():
         full_column_names = getComponentColumnNames(column_name)
         
         if isinstance(full_column_names, list):
-            format_string = "printf('" + " ".join(['%g'] * len(full_column_names)) + "'," 
+            unmasked_column = ''
+            masked_column = ''
             
-            select_sql = select_sql + format_string + ",".join(full_column_names) + ") AS " + column_name
+            for full_column_name in full_column_names:
+                unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + full_column_name
+                masked_column = masked_column + (' || \' \' || ' if masked_column else ',') + full_column_name + "_mask"
             
-            # If we have a list we'll also fetch the mask back:
-            select_sql = select_sql + ", " + format_string + "_mask,".join(full_column_names) + "_mask) AS " + column_name + "_mask"
+            unmasked_column = unmasked_column + " AS " + column_name
+            masked_column = masked_column + " AS " + column_name + "_mask"
+            
+            select_sql = select_sql + unmasked_column + masked_column
+            
         else:
             select_sql = select_sql + full_column_names
-
+    
         first = False
 
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
