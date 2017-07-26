@@ -51,6 +51,18 @@ curl \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
+    -F 'mask_details={"line_number": 200301,
+        "component_name": "HM_Z",
+        "mask": -1,
+        "range": [261348.0, 261348.5]}' \
+    "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
+
+
+curl \
+    -b cookies.txt \
+    -c cookies.txt \
+    -H "Accept: text/csv" \
+    -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
     "${URL_ROOT}/api/getLine"

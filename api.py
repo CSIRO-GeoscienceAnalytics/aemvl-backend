@@ -245,18 +245,30 @@ def applyMaskToFiducials():
 
 
 
+@app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
+def applyMaskToAllChannelsBetweenFiducials():
+    global project_id
+    project_id = request.form["project_id"]
 
+    mask_details = json.loads(request.form["mask_details"])
 
+    line_number = mask_details['line_number']
+    component_names = getComponentColumnNames(mask_details['component_name'])
+    mask = mask_details['mask']
+    
+    fiducial_min, fiducial_max = mask_details['range']
 
+    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+        cursor = connection.cursor()
+        sql = 'UPDATE dataframe SET ' + \
+            ("_mask = " + str(mask) + ",").join(component_names) + "_mask = " + str(mask) + \
+            ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
+        
+        print(sql)
 
-
-
-
-
-
-
-
-
-
-
+        # TODO: do I need to send flight number as well because line number could be non-unique
+        cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
+            
+    # TODO: fix return value
+    return Response("changes applied", mimetype = 'text/plain')
 
