@@ -126,7 +126,7 @@
     },
     {
       "id": "00000000-0000-0000-0000-000000000004",
-      "url": "{{URL}}/api/applyMask",
+      "url": "{{URL}}/api/applyMaskToFiducials",
       "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
@@ -137,20 +137,8 @@
           "enabled": true
         },
         {
-          "key": "line_number",
-          "value": "200301",
-          "type": "string",
-          "enabled": true
-        },
-        {
-          "key": "component_name",
-          "value": "HM_Z",
-          "type": "string",
-          "enabled": true
-        },
-        {
-          "key": "fiducials_and_masks",
-          "value": "[[261069.7,[0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]],[261069.6,[0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]]]",
+          "key": "mask_details",
+          "value": "{\"line_number\": 200301, \"component_name\": \"HM_Z\", \"masks\": [{ \"fid\": 261069.7, \"mask\": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]},{ \"fid\": 261069.6, \"mask\": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]}]}",
           "type": "string",
           "enabled": true
         }
@@ -164,7 +152,7 @@
       "currentHelper": "normal",
       "pathVariables": [],
       "version": 2,
-      "name": "{{URL}}/api/applyMask",
+      "name": "{{URL}}/api/applyMaskToFiducials",
       "description": "",
       "descriptionFormat": "html",
       "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"

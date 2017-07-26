@@ -210,39 +210,38 @@ def getLine():
 
         return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
 
-@app.route('/api/applyMask', methods=['POST'])
-def applyMask():
+
+
+@app.route('/api/applyMaskToFiducials', methods=['POST'])
+def applyMaskToFiducials():
     global project_id
     project_id = request.form["project_id"]
-    line_number = int(request.form["line_number"])
-    component_name = request.form["component_name"]
 
-    fiducials_and_masks = json.loads(request.form["fiducials_and_masks"])
+    mask_details = json.loads(request.form["mask_details"])
+    
+    line_number = mask_details['line_number']
+    component_name = mask_details['component_name']
+    fiducials_and_masks = mask_details['masks']
     
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         cursor = connection.cursor()
         for fiducial_and_masks in fiducials_and_masks:
             sql = 'UPDATE dataframe SET '
             
-            fiducial = fiducial_and_masks[0]
-            masks = fiducial_and_masks[1]
+            fiducial = fiducial_and_masks['fid']
+            masks = fiducial_and_masks['mask']
             index = 1;
             for mask in masks:
                 sql = sql + ('' if index == 1 else ',') + ' ' + component_name + '_' + str(index) + '_mask = ' + str(mask)
                 index = index + 1
             
             sql = sql + ' WHERE LineNumber = ? AND Fiducial = ?'
-            
-            
-            
+
             # TODO: do I need to send flight number as well because line number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
             
     # TODO: fix return value
     return Response("changes applied", mimetype = 'text/plain')
-
-
-
 
 
 
