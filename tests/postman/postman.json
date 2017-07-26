@@ -17,7 +17,7 @@
     {
       "id": "00000000-0000-0000-0000-000000000001",
       "headers": ["Accept: text/csv"],
-      "url": "http://conda:8080/api/upload",
+      "url": "{{URL}}/api/upload",
       "pathVariables": [],
       "preRequestScript": null,
       "method": "POST",
@@ -43,7 +43,7 @@
         }
       ],
       "dataMode": "params",
-      "name": "http://conda:8080/api/upload",
+      "name": "{{URL}}/api/upload",
       "description": "",
       "descriptionFormat": "html",
       "time": 1491374952065,
@@ -58,7 +58,7 @@
     },
     {
       "id": "00000000-0000-0000-0000-000000000002",
-      "url": "http://conda:8080/api/getLines",
+      "url": "{{URL}}/api/getLines",
       "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
@@ -79,14 +79,14 @@
       "currentHelper": "normal",
       "pathVariables": [],
       "version": 2,
-      "name": "http://conda:8080/api/getLines",
+      "name": "{{URL}}/api/getLines",
       "description": "",
       "descriptionFormat": "html",
       "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
     },
     {
       "id": "00000000-0000-0000-0000-000000000003",
-      "url": "http://conda:8080/api/getLine",
+      "url": "{{URL}}/api/getLine",
       "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
@@ -119,14 +119,14 @@
       "currentHelper": "normal",
       "pathVariables": [],
       "version": 2,
-      "name": "http://conda:8080/api/getLine",
+      "name": "{{URL}}/api/getLine",
       "description": "",
       "descriptionFormat": "html",
       "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
     },
     {
       "id": "00000000-0000-0000-0000-000000000004",
-      "url": "http://conda:8080/api/applyMask",
+      "url": "{{URL}}/api/applyMask",
       "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
@@ -164,14 +164,14 @@
       "currentHelper": "normal",
       "pathVariables": [],
       "version": 2,
-      "name": "http://conda:8080/api/applyMask",
+      "name": "{{URL}}/api/applyMask",
       "description": "",
       "descriptionFormat": "html",
       "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
     },
     {
       "id": "00000000-0000-0000-0000-000000000005",
-      "url": "http://conda:8080/api/getLine",
+      "url": "{{URL}}/api/getLine",
       "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
@@ -203,7 +203,7 @@
       "currentHelper": "normal",
       "pathVariables": [],
       "version": 2,
-      "name": "http://conda:8080/api/getLine",
+      "name": "{{URL}}/api/getLine",
       "description": "",
       "descriptionFormat": "html",
       "collectionId": "c0ffee00-beef-dead-f00d-baddadfeedaa"
