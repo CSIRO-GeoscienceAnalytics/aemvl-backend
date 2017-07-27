@@ -38,7 +38,6 @@ curl \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
-        "component_name": "HM_Z",
         "masks":
         [
             { "fid": 261069.7, "mask": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]},
@@ -52,7 +51,6 @@ curl \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
-        "component_name": "HM_Z",
         "mask": -1,
         "range": [261348.0, 261348.5]}' \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
