@@ -16,7 +16,7 @@ project_id = None
 
 def get_preferred_output_type():
     accept_headers = request.headers.get('Accept').split(',')
-
+    
     if 'text/csv' in accept_headers:
         return CSV_TYPE
     elif 'text/html' in accept_headers:
@@ -136,12 +136,11 @@ def api_upload():
     dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1), inplace=True)
     dataframe['LOCATION_4326'] = dataframe.apply(lambda row: createLocation4326(row['XComponent'], row['YComponent']), axis=1)
 
-    # Add mask columns equal to the number of columns each component has:
-    component_name = session['projects'][project_id]['em_info'][0]['Components'][0]['Name']
-    number_of_mask_columns = len(session['projects'][project_id]['data_definition'][component_name])
-    
-    for i in range(1, number_of_mask_columns + 1):
-        dataframe["mask_" + str(i)] = False
+    # Add a '_mask' column for every column that was generated from a list in the DataDefinition:
+    for key, value in session['projects'][project_id]['data_definition'].items():
+        if isinstance(value, list):
+            for column_number in value:
+                dataframe[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
 
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
@@ -179,33 +178,39 @@ def getLine():
     output_type = get_preferred_output_type()
 
     first = True
-    mask_columns_added = False
     select_sql = ''
     for column_name in column_names:
         select_sql = select_sql + ('' if first else ',')
         full_column_names = getComponentColumnNames(column_name)
         
         if isinstance(full_column_names, list):
-            return_mask_columns = True
-            select_sql = select_sql + ' || \' \' || '.join(full_column_names) + " AS " + column_name
+            unmasked_column = ''
+            masked_column = ''
             
-            if not mask_columns_added:
-                mask_columns_added = True
-                number_of_mask_columns = len(session['projects'][project_id]['data_definition'][column_name])
-                select_sql = select_sql + ', mask_' + ' || \' \' || mask_'.join([str(x) for x in range(1, number_of_mask_columns + 1)]) + " AS mask"
+            for full_column_name in full_column_names:
+                unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + full_column_name
+                masked_column = masked_column + (' || \' \' || ' if masked_column else ',') + full_column_name + "_mask"
+            
+            unmasked_column = unmasked_column + " AS " + column_name
+            masked_column = masked_column + " AS " + column_name + "_mask"
+            
+            select_sql = select_sql + unmasked_column + masked_column
+            
         else:
             select_sql = select_sql + full_column_names
     
         first = False
-    
+
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         sql = '''SELECT  Fiducial,''' + select_sql + '''
                 FROM    dataframe
                 WHERE   LineNumber = ''' + str(line_number)
-        
+
         result_set = pandas.read_sql(sql, connection)
 
         return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
+
+
 
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
 def applyMaskToFiducials():
@@ -215,6 +220,7 @@ def applyMaskToFiducials():
     mask_details = json.loads(request.form["mask_details"])
     
     line_number = mask_details['line_number']
+    component_name = mask_details['component_name']
     fiducials_and_masks = mask_details['masks']
     
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
@@ -226,33 +232,40 @@ def applyMaskToFiducials():
             masks = fiducial_and_masks['mask']
             index = 1;
             for mask in masks:
-                sql = sql + ('' if index == 1 else ',') + 'mask_' + str(index) + '=' + str(mask)
+                sql = sql + ('' if index == 1 else ',') + ' ' + component_name + '_' + str(index) + '_mask = ' + str(mask)
                 index = index + 1
-         
-            sql = sql + ' WHERE LineNumber = ? AND Fiducial = ?'
             
+            sql = sql + ' WHERE LineNumber = ? AND Fiducial = ?'
+
             # TODO: do I need to send flight number as well because line number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
             
     # TODO: fix return value
     return Response("changes applied", mimetype = 'text/plain')
 
+
+
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
 def applyMaskToAllChannelsBetweenFiducials():
     global project_id
     project_id = request.form["project_id"]
+
     mask_details = json.loads(request.form["mask_details"])
+
     line_number = mask_details['line_number']
-    mask = str(mask_details['mask'])
+    component_names = getComponentColumnNames(mask_details['component_name'])
+    mask = mask_details['mask']
+    
     fiducial_min, fiducial_max = mask_details['range']
-    number_of_mask_columns = len(session['projects'][project_id]['data_definition'][session['projects'][project_id]['em_info'][0]['Components'][0]['Name']])
 
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         cursor = connection.cursor()
-        sql = 'UPDATE dataframe SET mask_' + \
-            ('=' + mask + ", mask_").join([str(x) for x in range(1, number_of_mask_columns + 1)]) + \
-            '=' + mask + ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
-  
+        sql = 'UPDATE dataframe SET ' + \
+            ("_mask = " + str(mask) + ",").join(component_names) + "_mask = " + str(mask) + \
+            ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
+        
+        print(sql)
+
         # TODO: do I need to send flight number as well because line number could be non-unique
         cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
             

@@ -112,7 +112,7 @@
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"Fiducial,HM_Z,mask,PLNI\");",
+        "tests[\"Body matches header row\"] = responseBody.has(\"Fiducial,HM_Z,HM_Z_mask,PLNI\");",
         "tests[\"Body matches known data\"] = responseBody.has(\"261069.7,562.335 499.761 424.916 353.483\");"
       ],
       "preRequestScript": null,
@@ -138,7 +138,7 @@
         },
         {
           "key": "mask_details",
-          "value": "{\"line_number\": 200301, \"masks\": [{ \"fid\": 261069.7, \"mask\": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]},{ \"fid\": 261069.6, \"mask\": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]}]}",
+          "value": "{\"line_number\": 200301, \"component_name\": \"HM_Z\", \"masks\": [{ \"fid\": 261069.7, \"mask\": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]},{ \"fid\": 261069.6, \"mask\": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]}]}",
           "type": "string",
           "enabled": true
         }
