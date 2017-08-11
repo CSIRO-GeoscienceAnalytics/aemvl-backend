@@ -12,8 +12,8 @@ curl \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
-    -F "datafile=@../../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
-    -F "configfile=@../../docs/AUS_10004_CSIRO_SkyTem_EM.json" \
+    -F "datafile=@../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
+    -F "configfile=@../docs/AUS_10004_CSIRO_SkyTem_EM.json" \
     "${URL_ROOT}/api/upload"
 
 curl \
@@ -56,7 +56,6 @@ curl \
         "mask": -1,
         "range": [261348.0, 261348.5]}' \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
-
 
 curl \
     -b cookies.txt \
