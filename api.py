@@ -145,7 +145,7 @@ def api_upload():
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
 
-    return Response(project_id, mimetype = 'text/plain')
+    return Response('OK', mimetype = 'text/plain')
 
 # Used to create the map with all the flight lines:
 @app.route('/api/getLines', methods=['POST'])
