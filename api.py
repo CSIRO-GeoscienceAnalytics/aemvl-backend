@@ -148,7 +148,7 @@ def api_upload():
     return Response('OK', mimetype = 'text/plain')
 
 # Used to create the map with all the flight lines:
-@app.route('/api/getLines', methods=['POST'])
+@app.route('/api/getLines', methods=['GET'])
 def getLines():
     global project_id
     project_id = request.form["project_id"]
@@ -167,7 +167,7 @@ def getLines():
         return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
 
 # Used to create the multi-line graph:
-@app.route('/api/getLine', methods=['POST'])
+@app.route('/api/getLine', methods=['GET'])
 def getLine():
     global project_id
     project_id = request.form["project_id"]
