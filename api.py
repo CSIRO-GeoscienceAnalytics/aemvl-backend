@@ -76,8 +76,8 @@ def getComponentColumnNames(component_name):
         
 @app.route('/api/start_test_session', methods=['GET'])
 def start_test_session():
-    with open('docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ', 'rb') as datafile_handle:
-        with open('docs/AUS_10004_CSIRO_SkyTem_EM.json', 'rb') as configfile_handle:
+    with open('data/AUS_10004_CSIRO_EM_HM_reduced.XYZ', 'rb') as datafile_handle:
+        with open('data/AUS_10004_CSIRO_SkyTem_EM.json', 'rb') as configfile_handle:
             return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
 
 @app.route('/api/upload', methods=['POST'])

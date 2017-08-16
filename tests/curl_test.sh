@@ -12,8 +12,8 @@ curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
-    -F "datafile=@../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
-    -F "configfile=@../docs/AUS_10004_CSIRO_SkyTem_EM.json" \
+    -F "datafile=@../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
+    -F "configfile=@../data/AUS_10004_CSIRO_SkyTem_EM.json" \
     "${URL_ROOT}/api/upload"
 
 curl -s \

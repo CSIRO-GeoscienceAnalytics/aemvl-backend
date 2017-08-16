@@ -25,13 +25,13 @@
       "data": [
         {
           "key": "datafile",
-          "value": "../docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ",
+          "value": "../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ",
           "type": "file",
           "enabled": true
         },
         {
           "key": "configfile",
-          "value": "../docs/AUS_10004_CSIRO_SkyTem_EM.json",
+          "value": "../data/AUS_10004_CSIRO_SkyTem_EM.json",
           "type": "file",
           "enabled": true
         },
