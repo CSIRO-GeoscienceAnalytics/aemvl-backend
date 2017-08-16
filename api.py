@@ -210,8 +210,6 @@ def getLine():
 
         return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
 
-
-
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
 def applyMaskToFiducials():
     global project_id
@@ -243,8 +241,6 @@ def applyMaskToFiducials():
     # TODO: fix return value
     return Response("changes applied", mimetype = 'text/plain')
 
-
-
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
 def applyMaskToAllChannelsBetweenFiducials():
     global project_id
@@ -263,12 +259,9 @@ def applyMaskToAllChannelsBetweenFiducials():
         sql = 'UPDATE dataframe SET ' + \
             ("_mask = " + str(mask) + ",").join(component_names) + "_mask = " + str(mask) + \
             ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
-        
-        print(sql)
 
         # TODO: do I need to send flight number as well because line number could be non-unique
         cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
             
     # TODO: fix return value
     return Response("changes applied", mimetype = 'text/plain')
-

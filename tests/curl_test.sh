@@ -8,7 +8,7 @@ URL_ROOT=$1
 
 echo '' > cookies.txt
 
-curl \
+curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
@@ -16,14 +16,14 @@ curl \
     -F "configfile=@../docs/AUS_10004_CSIRO_SkyTem_EM.json" \
     "${URL_ROOT}/api/upload"
 
-curl \
+curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
     "${URL_ROOT}/api/getLines"
 
-curl \
+curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
@@ -32,7 +32,7 @@ curl \
     -F "column_names=HM_Z,PLNI" \
     "${URL_ROOT}/api/getLine"
 
-curl \
+curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
@@ -46,7 +46,7 @@ curl \
         ]}' \
     "${URL_ROOT}/api/applyMaskToFiducials"
 
-curl \
+curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
@@ -57,7 +57,7 @@ curl \
         "range": [261348.0, 261348.5]}' \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
 
-curl \
+curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
@@ -65,3 +65,17 @@ curl \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
     "${URL_ROOT}/api/getLine"
+
+# Do a test to work out what is set for Access-Control-Allow-Origin:
+curl -s \
+    -i \
+    -I \
+    -b cookies.txt \
+    -c cookies.txt \
+    -H "Accept: text/csv" \
+    "${URL_ROOT}/api/getLines" > out
+
+echo $'\nThe next line will show the value of Access-Control-Allow-Origin if it has been set:'
+grep 'Access-Control-Allow-Origin' out
+rm out
+
