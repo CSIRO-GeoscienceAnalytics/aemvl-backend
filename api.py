@@ -5,6 +5,7 @@ import pandas
 from flask import request, session, redirect, Response
 from app import app
 from osgeo import ogr, osr
+from werkzeug.datastructures import FileStorage
 import pathlib
 import json
 
@@ -72,24 +73,33 @@ def getComponentColumnNames(component_name):
         return [component_name + "_" + str(n) for n in column_suffixes]
     else:
         return component_name
+        
+@app.route('/api/start_test_session', methods=['GET'])
+def start_test_session():
+    with open('docs/AUS_10004_CSIRO_EM_HM_reduced.XYZ', 'rb') as datafile_handle:
+        with open('docs/AUS_10004_CSIRO_SkyTem_EM.json', 'rb') as configfile_handle:
+            return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
-    global project_id
-    project_id = request.form["project_id"]
-    
-    # TODO: Use output_type
-    output_type = get_preferred_output_type()
-
     # check that the POST request is complete:
     if 'datafile' not in request.files:
         return "error: datafile not provided"
 
     if 'configfile' not in request.files:
         return "error: configfile not provided"
+    
+    datafile_handle = request.files['datafile']
+    configfile_handle = request.files['configfile']
+    
+    return start_session(datafile_handle, configfile_handle)
 
-    if 'project_id' not in request.form:
-        return "error: project_id not provided"
+def start_session(datafile_handle, configfile_handle):
+    global project_id
+    project_id = request.form["project_id"]
+
+    # TODO: Use output_type
+    output_type = get_preferred_output_type()
     
     # Create the session if it doesn't exist:
     if 'session_id' not in session:
@@ -98,14 +108,12 @@ def api_upload():
 
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], session['session_id'], project_id)
     pathlib.Path(project_path).mkdir(parents=True)
-    
+
     session['projects'][project_id] = {'project_path': project_path}
 
-    datafile_handle = request.files['datafile']
     datafile_path = os.path.join(project_path, 'data.xyz')
     datafile_handle.save(datafile_path)
 
-    configfile_handle = request.files['configfile']
     configfile_path = os.path.join(project_path, 'config.json')
     configfile_handle.save(configfile_path)
     
