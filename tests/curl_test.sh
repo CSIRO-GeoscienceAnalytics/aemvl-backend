@@ -21,6 +21,7 @@ curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
+    -X GET \
     "${URL_ROOT}/api/getLines"
 
 curl -s \
@@ -30,6 +31,7 @@ curl -s \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
+    -X GET \
     "${URL_ROOT}/api/getLine"
 
 curl -s \
@@ -64,6 +66,7 @@ curl -s \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
+    -X GET \
     "${URL_ROOT}/api/getLine"
 
 # Do a test to work out what is set for Access-Control-Allow-Origin:
