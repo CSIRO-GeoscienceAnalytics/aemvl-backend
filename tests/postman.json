@@ -31,7 +31,7 @@
         },
         {
           "key": "configfile",
-          "value": "../data/AUS_10004_CSIRO_SkyTem_EM.json",
+          "value": "../data/AUS_10004_CSIRO_EM_HM_reduced.json",
           "type": "file",
           "enabled": true
         },

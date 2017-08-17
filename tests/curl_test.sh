@@ -13,7 +13,7 @@ curl -s \
     -H "Accept: text/csv" \
     -F "project_id=TESTPROJECT" \
     -F "datafile=@../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
-    -F "configfile=@../data/AUS_10004_CSIRO_SkyTem_EM.json" \
+    -F "configfile=@../data/AUS_10004_CSIRO_EM_HM_reduced.json" \
     "${URL_ROOT}/api/upload"
 
 curl -s \

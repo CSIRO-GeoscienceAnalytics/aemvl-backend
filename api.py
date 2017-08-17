@@ -77,7 +77,7 @@ def getComponentColumnNames(component_name):
 @app.route('/api/start_test_session', methods=['GET'])
 def start_test_session():
     with open('data/AUS_10004_CSIRO_EM_HM_reduced.XYZ', 'rb') as datafile_handle:
-        with open('data/AUS_10004_CSIRO_SkyTem_EM.json', 'rb') as configfile_handle:
+        with open('data/AUS_10004_CSIRO_EM_HM_reduced.json', 'rb') as configfile_handle:
             return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
 
 @app.route('/api/upload', methods=['POST'])
@@ -199,6 +199,7 @@ def getLine():
                 unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + full_column_name
                 masked_column = masked_column + (' || \' \' || ' if masked_column else ',') + full_column_name + "_mask"
             
+            # TODO: These need to be consitently named as em and em_mask. The abilitiy to download lots of columns is apparently not needed...
             unmasked_column = unmasked_column + " AS " + column_name
             masked_column = masked_column + " AS " + column_name + "_mask"
             
@@ -224,11 +225,11 @@ def applyMaskToFiducials():
     project_id = request.form["project_id"]
 
     mask_details = json.loads(request.form["mask_details"])
-    
+
     line_number = mask_details['line_number']
     component_name = mask_details['component_name']
     fiducials_and_masks = mask_details['masks']
-    
+
     with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
         cursor = connection.cursor()
         for fiducial_and_masks in fiducials_and_masks:
