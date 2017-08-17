@@ -69,6 +69,14 @@ curl -s \
     -X GET \
     "${URL_ROOT}/api/getLine"
 
+curl -s \
+    -c cookies.txt \
+    -H "Accept: text/csv" \
+    -F "project_id=TESTPROJECT" \
+    -F "test_dataset_name=AUS_10004_CSIRO_EM_HM_reduced" \
+    -X GET \
+    "${URL_ROOT}/api/start_test_session"
+
 # Do a test to work out what is set for Access-Control-Allow-Origin:
 curl -s \
     -i \

@@ -8,6 +8,7 @@ from osgeo import ogr, osr
 from werkzeug.datastructures import FileStorage
 import pathlib
 import json
+import glob
 
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
@@ -73,11 +74,20 @@ def getComponentColumnNames(component_name):
         return [component_name + "_" + str(n) for n in column_suffixes]
     else:
         return component_name
-        
+
+@app.route('/api/list_test_datasets', methods=['GET'])
+def list_test_datasets():
+    file_names = glob.glob('data/*')
+    file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
+
+    return str([file_name[len('data/'):] for file_name in file_names])
+
 @app.route('/api/start_test_session', methods=['GET'])
 def start_test_session():
-    with open('data/AUS_10004_CSIRO_EM_HM_reduced.XYZ', 'rb') as datafile_handle:
-        with open('data/AUS_10004_CSIRO_EM_HM_reduced.json', 'rb') as configfile_handle:
+    test_dataset_name = request.form["test_dataset_name"]
+
+    with open('data/' + test_dataset_name + '.XYZ', 'rb') as datafile_handle:
+        with open('data/' + test_dataset_name + '.json', 'rb') as configfile_handle:
             return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
 
 @app.route('/api/upload', methods=['POST'])
