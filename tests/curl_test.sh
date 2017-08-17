@@ -77,6 +77,12 @@ curl -s \
     -X GET \
     "${URL_ROOT}/api/start_test_session"
 
+curl -s \
+    -c cookies.txt \
+    -H "Accept: text/csv" \
+    -X GET \
+    "http://localhost:8080/api/list_test_datasets"
+
 # Do a test to work out what is set for Access-Control-Allow-Origin:
 curl -s \
     -i \
