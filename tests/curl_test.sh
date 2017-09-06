@@ -73,7 +73,7 @@ curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
     -X GET \
-    "http://localhost:8080/api/list_test_datasets"
+    "${URL_ROOT}/api/list_test_datasets"
 
 curl -s \
     -c cookies.txt \
@@ -82,6 +82,16 @@ curl -s \
     -F "test_dataset_name=AUS_10004_CSIRO_EM_HM_reduced" \
     -X GET \
     "${URL_ROOT}/api/start_test_session"
+
+curl -s \
+    -b cookies.txt \
+    -c cookies.txt \
+    -H "Accept: text/csv" \
+    -F "project_id=TESTPROJECT" \
+    -F "line_number=200001" \
+    -F "column_names=HM_Z,PLNI" \
+    -X GET \
+    "${URL_ROOT}/api/getLine"
 
 # Do a test to work out what is set for Access-Control-Allow-Origin:
 curl -s \
