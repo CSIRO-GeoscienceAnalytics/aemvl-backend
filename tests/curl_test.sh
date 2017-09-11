@@ -94,15 +94,16 @@ curl -s \
     "${URL_ROOT}/api/getLine"
 
 # Do a test to work out what is set for Access-Control-Allow-Origin:
+TEMP=$(mktemp)
 curl -s \
     -i \
     -I \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
-    "${URL_ROOT}/api/getLines" > out
+    "${URL_ROOT}/api/getLines" > $TEMP
 
 echo $'\nThe next line will show the value of Access-Control-Allow-Origin if it has been set:'
-grep 'Access-Control-Allow-Origin' out
-rm out
+grep 'Access-Control-Allow-Origin' $TEMP
+rm $TEMP
 
