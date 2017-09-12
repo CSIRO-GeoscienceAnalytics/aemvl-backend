@@ -14,7 +14,6 @@ outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
 CSV_TYPE = 1
 HTML_TYPE = 2
-project_id = None
 
 def get_preferred_output_type():
     accept_headers = request.headers.get('Accept').split(',')
@@ -29,17 +28,17 @@ def get_preferred_output_type():
 # Look up a DataDefinition column name in the FlightPlanInfo object to see if it is
 # an alias of a well-known name. If it is we will return the well-known name, otherwise
 # return the original name:
-def getColumnWellKnownName(column_name):
+def getColumnWellKnownName(column_name, project_id):
     for well_known_name, alias in session['projects'][project_id]['flight_plan_info'].items():
         if column_name == alias:
             return well_known_name
 
     return column_name        
 
-def getColumnNameByNumber(number):
+def getColumnNameByNumber(number, project_id):
     for column_name, column_number in session['projects'][project_id]['data_definition'].items():
         if isinstance(column_number, int) and number == column_number:
-            return getColumnWellKnownName(column_name)
+            return getColumnWellKnownName(column_name, project_id)
         if isinstance(column_number, list) and number in column_number:
             if column_name not in session['projects'][project_id]['component_column_offsets']:
                 # This has to be cast to a normal int otherwise it ends up as numpy.int64 which can't be serialised into the session:
@@ -47,7 +46,7 @@ def getColumnNameByNumber(number):
 
             return column_name + "_" + str(number - session['projects'][project_id]['component_column_offsets'][column_name])
 
-def createLocation4326(x_component, y_component):
+def createLocation4326(x_component, y_component, project_id):
     # If we're already using WGS84 / 4326 we don't need to perform a conversion:
     if session['projects'][project_id]['flight_plan_info']["CoordinateSystem"] in ['WGS84', 4326]:
         return str(x_component) + " " + str(y_component)
@@ -67,7 +66,7 @@ def createLocation4326(x_component, y_component):
 
         return str(point.GetX()) + " " + str(point.GetY())
 
-def getComponentColumnNames(component_name):
+def getComponentColumnNames(component_name, project_id):
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
         column_suffixes = list(range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name], 
             len(session['projects'][project_id]['data_definition'][component_name]) + 1))
@@ -105,7 +104,7 @@ def api_upload():
     return start_session(datafile_handle, configfile_handle)
 
 def start_session(datafile_handle, configfile_handle):
-    global project_id
+    user_token = request.form["user_token"]
     project_id = request.form["project_id"]
 
     # TODO: Use output_type
@@ -116,10 +115,10 @@ def start_session(datafile_handle, configfile_handle):
         session['session_id'] = str(uuid.uuid1())
         session['projects'] = {}
 
-    project_path = os.path.join(app.config['UPLOAD_FOLDER'], session['session_id'], project_id)
+    project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
     pathlib.Path(project_path).mkdir(parents=True)
 
-    session['projects'][project_id] = {'project_path': project_path}
+    session['projects'][project_id] = {}
 
     datafile_path = os.path.join(project_path, 'data.xyz')
     datafile_handle.save(datafile_path)
@@ -151,8 +150,8 @@ def start_session(datafile_handle, configfile_handle):
     dataframe = pandas.read_csv(datafile_path, header=None, delim_whitespace=True)
 
     # Apply the names to the columns:
-    dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1), inplace=True)
-    dataframe['LOCATION_4326'] = dataframe.apply(lambda row: createLocation4326(row['XComponent'], row['YComponent']), axis=1)
+    dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1, project_id), inplace=True)
+    dataframe['LOCATION_4326'] = dataframe.apply(lambda row: createLocation4326(row['XComponent'], row['YComponent'], project_id), axis=1)
 
     # Add a '_mask' column for every column that was generated from a list in the DataDefinition:
     for key, value in session['projects'][project_id]['data_definition'].items():
@@ -160,7 +159,7 @@ def start_session(datafile_handle, configfile_handle):
             for column_number in value:
                 dataframe[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
 
-    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+    with sqlite3.connect(os.path.join(project_path, 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
 
     return Response('OK', mimetype = 'text/plain')
@@ -168,13 +167,15 @@ def start_session(datafile_handle, configfile_handle):
 # Used to create the map with all the flight lines:
 @app.route('/api/getLines', methods=['GET'])
 def getLines():
-    global project_id
+    user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
     
     # TODO: Use output_type
     output_type = get_preferred_output_type()
 
-    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+    with sqlite3.connect(database_path) as connection:
         result_set = pandas.read_sql(
             ''' SELECT  LineNumber,
                         Fiducial,
@@ -187,8 +188,11 @@ def getLines():
 # Used to create the multi-line graph:
 @app.route('/api/getLine', methods=['GET'])
 def getLine():
-    global project_id
+    user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
+    
     line_number = int(request.form["line_number"])
     column_names = request.form["column_names"].split(',')
 
@@ -199,7 +203,7 @@ def getLine():
     select_sql = ''
     for column_name in column_names:
         select_sql = select_sql + ('' if first else ',')
-        full_column_names = getComponentColumnNames(column_name)
+        full_column_names = getComponentColumnNames(column_name, project_id)
         
         if isinstance(full_column_names, list):
             unmasked_column = ''
@@ -220,7 +224,7 @@ def getLine():
     
         first = False
 
-    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+    with sqlite3.connect(database_path) as connection:
         sql = '''SELECT  Fiducial,''' + select_sql + '''
                 FROM    dataframe
                 WHERE   LineNumber = ''' + str(line_number)
@@ -231,8 +235,10 @@ def getLine():
 
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
 def applyMaskToFiducials():
-    global project_id
+    user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     mask_details = json.loads(request.form["mask_details"])
 
@@ -240,7 +246,7 @@ def applyMaskToFiducials():
     component_name = mask_details['component_name']
     fiducials_and_masks = mask_details['masks']
 
-    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+    with sqlite3.connect(database_path) as connection:
         cursor = connection.cursor()
         for fiducial_and_masks in fiducials_and_masks:
             sql = 'UPDATE dataframe SET '
@@ -262,18 +268,20 @@ def applyMaskToFiducials():
 
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
 def applyMaskToAllChannelsBetweenFiducials():
-    global project_id
+    user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_names = getComponentColumnNames(mask_details['component_name'])
+    component_names = getComponentColumnNames(mask_details['component_name'], project_id)
     mask = mask_details['mask']
     
     fiducial_min, fiducial_max = mask_details['range']
 
-    with sqlite3.connect(os.path.join(session['projects'][project_id]['project_path'], 'database.db')) as connection:
+    with sqlite3.connect(database_path) as connection:
         cursor = connection.cursor()
         sql = 'UPDATE dataframe SET ' + \
             ("_mask = " + str(mask) + ",").join(component_names) + "_mask = " + str(mask) + \

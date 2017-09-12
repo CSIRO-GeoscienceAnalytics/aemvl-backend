@@ -11,6 +11,7 @@ echo '' > cookies.txt
 curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
+    -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F "datafile=@../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
     -F "configfile=@../data/AUS_10004_CSIRO_EM_HM_reduced.json" \
@@ -20,6 +21,7 @@ curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
+    -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -X GET \
     "${URL_ROOT}/api/getLines"
@@ -28,6 +30,7 @@ curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
+    -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
@@ -38,6 +41,7 @@ curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
+    -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
         "component_name": "HM_Z",
@@ -52,6 +56,7 @@ curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
+    -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
         "component_name": "HM_Z",
@@ -63,6 +68,7 @@ curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
+    -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
@@ -78,7 +84,8 @@ curl -s \
 curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
-    -F "project_id=TESTPROJECT" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
     -F "test_dataset_name=AUS_10004_CSIRO_EM_HM_reduced" \
     -X GET \
     "${URL_ROOT}/api/start_test_session"
@@ -87,7 +94,8 @@ curl -s \
     -b cookies.txt \
     -c cookies.txt \
     -H "Accept: text/csv" \
-    -F "project_id=TESTPROJECT" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
     -F "line_number=200001" \
     -F "column_names=HM_Z,PLNI" \
     -X GET \
@@ -106,4 +114,3 @@ curl -s \
 echo $'\nThe next line will show the value of Access-Control-Allow-Origin if it has been set:'
 grep 'Access-Control-Allow-Origin' $TEMP
 rm $TEMP
-
