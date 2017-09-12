@@ -10,7 +10,7 @@ echo '' > cookies.txt
 
 curl -s \
     -c cookies.txt \
-    -H "Accept: text/csv" \
+    -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F "datafile=@../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
@@ -40,7 +40,7 @@ curl -s \
 curl -s \
     -b cookies.txt \
     -c cookies.txt \
-    -H "Accept: text/csv" \
+    -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
@@ -55,7 +55,7 @@ curl -s \
 curl -s \
     -b cookies.txt \
     -c cookies.txt \
-    -H "Accept: text/csv" \
+    -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
@@ -83,7 +83,7 @@ curl -s \
 
 curl -s \
     -c cookies.txt \
-    -H "Accept: text/csv" \
+    -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
     -F "test_dataset_name=AUS_10004_CSIRO_EM_HM_reduced" \

@@ -12,16 +12,14 @@ import glob
 
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
-CSV_TYPE = 1
-HTML_TYPE = 2
 
-def get_preferred_output_type():
+def generateResponse(result_set):
     accept_headers = request.headers.get('Accept').split(',')
     
     if 'text/csv' in accept_headers:
-        return CSV_TYPE
+        return Response(result_set.to_csv(index = False), mimetype = 'text/csv')
     elif 'text/html' in accept_headers:
-        return HTML_TYPE
+        return Response(result_set.to_html(index = False), mimetype = 'text/html')
     else:
         raise Exception("Unsupported accept header provided: " + str(accept_headers))
 
@@ -107,9 +105,6 @@ def start_session(datafile_handle, configfile_handle):
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
 
-    # TODO: Use output_type
-    output_type = get_preferred_output_type()
-    
     # Create the session if it doesn't exist:
     if 'session_id' not in session:
         session['session_id'] = str(uuid.uuid1())
@@ -161,8 +156,8 @@ def start_session(datafile_handle, configfile_handle):
 
     with sqlite3.connect(os.path.join(project_path, 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
-
-    return Response('OK', mimetype = 'text/plain')
+    
+    return Response(json.dumps({'response': 'OK', 'message': None }), mimetype = 'application/json')
 
 # Used to create the map with all the flight lines:
 @app.route('/api/getLines', methods=['GET'])
@@ -171,9 +166,6 @@ def getLines():
     project_id = request.form["project_id"]
     
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
-    
-    # TODO: Use output_type
-    output_type = get_preferred_output_type()
 
     with sqlite3.connect(database_path) as connection:
         result_set = pandas.read_sql(
@@ -182,8 +174,8 @@ def getLines():
                         LOCATION_4326
                 FROM    dataframe''',
             connection)
-
-        return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
+            
+        return generateResponse(result_set)
 
 # Used to create the multi-line graph:
 @app.route('/api/getLine', methods=['GET'])
@@ -195,9 +187,6 @@ def getLine():
     
     line_number = int(request.form["line_number"])
     column_names = request.form["column_names"].split(',')
-
-    # TODO: Use output_type
-    output_type = get_preferred_output_type()
 
     first = True
     select_sql = ''
@@ -231,7 +220,7 @@ def getLine():
 
         result_set = pandas.read_sql(sql, connection)
 
-        return Response(result_set.to_csv(index = False), mimetype = 'text/plain')
+        return generateResponse(result_set)
 
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
 def applyMaskToFiducials():
@@ -263,8 +252,7 @@ def applyMaskToFiducials():
             # TODO: do I need to send flight number as well because line number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
             
-    # TODO: fix return value
-    return Response("changes applied", mimetype = 'text/plain')
+    return Response(json.dumps({'response': 'OK', 'message': 'changes applied' }), mimetype = 'application/json')
 
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
 def applyMaskToAllChannelsBetweenFiducials():
@@ -290,5 +278,4 @@ def applyMaskToAllChannelsBetweenFiducials():
         # TODO: do I need to send flight number as well because line number could be non-unique
         cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
             
-    # TODO: fix return value
-    return Response("changes applied", mimetype = 'text/plain')
+    return Response(json.dumps({'response': 'OK', 'message': 'changes applied' }), mimetype = 'application/json')
