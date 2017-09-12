@@ -16,7 +16,7 @@
   "requests": [
     {
       "id": "00000000-0000-0000-0000-000000000001",
-      "headers": ["Accept: text/csv"],
+      "headers": ["Accept: application/json"],
       "url": "{{URL}}/api/upload",
       "pathVariables": [],
       "preRequestScript": null,
@@ -33,6 +33,12 @@
           "key": "configfile",
           "value": "../data/AUS_10004_CSIRO_EM_HM_reduced.json",
           "type": "file",
+          "enabled": true
+        },
+        {
+          "key": "user_token",
+          "value": "testuser",
+          "type": "string",
           "enabled": true
         },
         {
@@ -63,6 +69,12 @@
       "headers": ["Accept: text/csv"],
       "data": [
         {
+          "key": "user_token",
+          "value": "testuser",
+          "type": "string",
+          "enabled": true
+        },
+        {
           "key": "project_id",
           "value": "TESTPROJECT",
           "type": "string",
@@ -90,6 +102,12 @@
       "method": "GET",
       "headers": ["Accept: text/csv"],
       "data": [
+        {
+          "key": "user_token",
+          "value": "testuser",
+          "type": "string",
+          "enabled": true
+        },
         {
           "key": "project_id",
           "value": "TESTPROJECT",
@@ -128,8 +146,14 @@
       "id": "00000000-0000-0000-0000-000000000004",
       "url": "{{URL}}/api/applyMaskToFiducials",
       "method": "POST",
-      "headers": ["Accept: text/csv"],
+      "headers": ["Accept: application/json"],
       "data": [
+        {
+          "key": "user_token",
+          "value": "testuser",
+          "type": "string",
+          "enabled": true
+        },
         {
           "key": "project_id",
           "value": "TESTPROJECT",
@@ -163,6 +187,12 @@
       "method": "GET",
       "headers": ["Accept: text/csv"],
       "data": [
+        {
+          "key": "user_token",
+          "value": "testuser",
+          "type": "string",
+          "enabled": true
+        },
         {
           "key": "project_id",
           "value": "TESTPROJECT",
