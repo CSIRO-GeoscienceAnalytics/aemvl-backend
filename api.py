@@ -13,25 +13,34 @@ import glob
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
 
+
 def generateResponse(result_set):
     accept_headers = request.headers.get('Accept').split(',')
-    
-    if 'text/csv' in accept_headers:
-        return Response(result_set.to_csv(index = False), mimetype = 'text/csv')
-    elif 'text/html' in accept_headers:
-        return Response(result_set.to_html(index = False), mimetype = 'text/html')
-    else:
-        raise Exception("Unsupported accept header provided: " + str(accept_headers))
 
-# Look up a DataDefinition column name in the FlightPlanInfo object to see if it is
-# an alias of a well-known name. If it is we will return the well-known name, otherwise
-# return the original name:
+    if 'text/csv' in accept_headers:
+        return Response(
+            result_set.to_csv(index=False),
+            mimetype='text/csv')
+    elif 'text/html' in accept_headers:
+        return Response(
+            result_set.to_html(index=False),
+            mimetype='text/html')
+    else:
+        raise Exception(
+            "Unsupported accept header provided: " +
+            str(accept_headers))
+
+
+# Look up a DataDefinition column name in the FlightPlanInfo object to
+# see if it is an alias of a well-known name. If it is we will return
+# the well-known name, otherwise return the original name:
 def getColumnWellKnownName(column_name, project_id):
     for well_known_name, alias in session['projects'][project_id]['flight_plan_info'].items():
         if column_name == alias:
             return well_known_name
 
-    return column_name        
+    return column_name
+
 
 def getColumnNameByNumber(number, project_id):
     for column_name, column_number in session['projects'][project_id]['data_definition'].items():
@@ -39,18 +48,25 @@ def getColumnNameByNumber(number, project_id):
             return getColumnWellKnownName(column_name, project_id)
         if isinstance(column_number, list) and number in column_number:
             if column_name not in session['projects'][project_id]['component_column_offsets']:
-                # This has to be cast to a normal int otherwise it ends up as numpy.int64 which can't be serialised into the session:
+                # This has to be cast to a normal int otherwise it ends
+                # up as numpy.int64 which can't be serialised into the
+                # session:
                 session['projects'][project_id]['component_column_offsets'][column_name] = int(number - 1)
 
             return column_name + "_" + str(number - session['projects'][project_id]['component_column_offsets'][column_name])
 
+
 def createLocation4326(x_component, y_component, project_id):
-    # If we're already using WGS84 / 4326 we don't need to perform a conversion:
-    if session['projects'][project_id]['flight_plan_info']["CoordinateSystem"] in ['WGS84', 4326]:
+    coordinateSystem = session['projects'][project_id]['flight_plan_info']["CoordinateSystem"]
+
+    # If we're already using WGS84 / 4326 we don't need to perform a
+    # conversion:
+    if coordinateSystem in ['WGS84', 4326]:
         return str(x_component) + " " + str(y_component)
     else:
-        # TODO: I'm assuming that flight_plan_info["CoordinateSystem"] will be an EPSG number, not a name like GDA84, WGS84
-        inputEPSG = session['projects'][project_id]['flight_plan_info']["CoordinateSystem"]
+        # TODO: I'm assuming that flight_plan_info["CoordinateSystem"]
+        # will be an EPSG number, not a name like GDA84, WGS84
+        inputEPSG = coordinateSystem
 
         # create a geometry from coordinates
         point = ogr.Geometry(ogr.wkbPoint)
@@ -59,18 +75,23 @@ def createLocation4326(x_component, y_component, project_id):
         inSpatialRef = osr.SpatialReference()
         inSpatialRef.ImportFromEPSG(inputEPSG)
 
-        coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef4326)
+        coordTransform = osr.CoordinateTransformation(
+            inSpatialRef,
+            outSpatialRef4326)
         point.Transform(coordTransform)
 
         return str(point.GetX()) + " " + str(point.GetY())
 
+
 def getComponentColumnNames(component_name, project_id):
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
-        column_suffixes = list(range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name], 
-            len(session['projects'][project_id]['data_definition'][component_name]) + 1))
+        column_suffixes =
+        list(range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
+             len(session['projects'][project_id]['data_definition'][component_name]) + 1))
         return [component_name + "_" + str(n) for n in column_suffixes]
     else:
         return component_name
+
 
 @app.route('/api/list_test_datasets', methods=['GET'])
 def list_test_datasets():
@@ -78,6 +99,7 @@ def list_test_datasets():
     file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
 
     return str([file_name[len('data/'):] for file_name in file_names])
+
 
 @app.route('/api/start_test_session', methods=['GET'])
 def start_test_session():
@@ -87,6 +109,7 @@ def start_test_session():
         with open('data/' + test_dataset_name + '.json', 'rb') as configfile_handle:
             return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
 
+
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
     # check that the POST request is complete:
@@ -95,11 +118,12 @@ def api_upload():
 
     if 'configfile' not in request.files:
         return "error: configfile not provided"
-    
+
     datafile_handle = request.files['datafile']
     configfile_handle = request.files['configfile']
-    
+
     return start_session(datafile_handle, configfile_handle)
+
 
 def start_session(datafile_handle, configfile_handle):
     user_token = request.form["user_token"]
@@ -120,7 +144,7 @@ def start_session(datafile_handle, configfile_handle):
 
     configfile_path = os.path.join(project_path, 'config.json')
     configfile_handle.save(configfile_path)
-    
+
     json_content = None
     data_definition = None
     flight_plan_info = None
@@ -148,7 +172,8 @@ def start_session(datafile_handle, configfile_handle):
     dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1, project_id), inplace=True)
     dataframe['LOCATION_4326'] = dataframe.apply(lambda row: createLocation4326(row['XComponent'], row['YComponent'], project_id), axis=1)
 
-    # Add a '_mask' column for every column that was generated from a list in the DataDefinition:
+    # Add a '_mask' column for every column that was generated from a
+    # list in the DataDefinition:
     for key, value in session['projects'][project_id]['data_definition'].items():
         if isinstance(value, list):
             for column_number in value:
@@ -156,15 +181,16 @@ def start_session(datafile_handle, configfile_handle):
 
     with sqlite3.connect(os.path.join(project_path, 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
-    
-    return Response(json.dumps({'response': 'OK', 'message': None }), mimetype = 'application/json')
+
+    return Response(json.dumps({'response': 'OK', 'message': None}), mimetype='application/json')
+
 
 # Used to create the map with all the flight lines:
 @app.route('/api/getLines', methods=['GET'])
 def getLines():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
-    
+
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     with sqlite3.connect(database_path) as connection:
@@ -174,17 +200,18 @@ def getLines():
                         LOCATION_4326
                 FROM    dataframe''',
             connection)
-            
+
         return generateResponse(result_set)
+
 
 # Used to create the multi-line graph:
 @app.route('/api/getLine', methods=['GET'])
 def getLine():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
-    
+
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
-    
+
     line_number = int(request.form["line_number"])
     column_names = request.form["column_names"].split(',')
 
@@ -193,24 +220,26 @@ def getLine():
     for column_name in column_names:
         select_sql = select_sql + ('' if first else ',')
         full_column_names = getComponentColumnNames(column_name, project_id)
-        
+
         if isinstance(full_column_names, list):
             unmasked_column = ''
             masked_column = ''
-            
+
             for full_column_name in full_column_names:
                 unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + full_column_name
                 masked_column = masked_column + (' || \' \' || ' if masked_column else ',') + full_column_name + "_mask"
-            
-            # TODO: These need to be consitently named as em and em_mask. The abilitiy to download lots of columns is apparently not needed...
+
+            # TODO: These need to be consitently named as em and
+            # em_mask. The abilitiy to download lots of columns is
+            # apparently not needed...
             unmasked_column = unmasked_column + " AS " + column_name
             masked_column = masked_column + " AS " + column_name + "_mask"
-            
+
             select_sql = select_sql + unmasked_column + masked_column
-            
+
         else:
             select_sql = select_sql + full_column_names
-    
+
         first = False
 
     with sqlite3.connect(database_path) as connection:
@@ -222,11 +251,12 @@ def getLine():
 
         return generateResponse(result_set)
 
+
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
 def applyMaskToFiducials():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
-    
+
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     mask_details = json.loads(request.form["mask_details"])
@@ -239,26 +269,30 @@ def applyMaskToFiducials():
         cursor = connection.cursor()
         for fiducial_and_masks in fiducials_and_masks:
             sql = 'UPDATE dataframe SET '
-            
+
             fiducial = fiducial_and_masks['fid']
             masks = fiducial_and_masks['mask']
-            index = 1;
+            index = 1
             for mask in masks:
                 sql = sql + ('' if index == 1 else ',') + ' ' + component_name + '_' + str(index) + '_mask = ' + str(mask)
                 index = index + 1
-            
+
             sql = sql + ' WHERE LineNumber = ? AND Fiducial = ?'
 
-            # TODO: do I need to send flight number as well because line number could be non-unique
+            # TODO: do I need to send flight number as well because line
+            # number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
-            
-    return Response(json.dumps({'response': 'OK', 'message': 'changes applied' }), mimetype = 'application/json')
+
+    return Response(json.dumps({'response': 'OK',
+                                'message': 'changes applied'}),
+                    mimetype='application/json')
+
 
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
 def applyMaskToAllChannelsBetweenFiducials():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
-    
+
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     mask_details = json.loads(request.form["mask_details"])
@@ -266,7 +300,7 @@ def applyMaskToAllChannelsBetweenFiducials():
     line_number = mask_details['line_number']
     component_names = getComponentColumnNames(mask_details['component_name'], project_id)
     mask = mask_details['mask']
-    
+
     fiducial_min, fiducial_max = mask_details['range']
 
     with sqlite3.connect(database_path) as connection:
@@ -275,7 +309,10 @@ def applyMaskToAllChannelsBetweenFiducials():
             ("_mask = " + str(mask) + ",").join(component_names) + "_mask = " + str(mask) + \
             ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
 
-        # TODO: do I need to send flight number as well because line number could be non-unique
+        # TODO: do I need to send flight number as well because line
+        # number could be non-unique
         cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
-            
-    return Response(json.dumps({'response': 'OK', 'message': 'changes applied' }), mimetype = 'application/json')
+
+    return Response(json.dumps({'response': 'OK',
+                                'message': 'changes applied'}),
+                    mimetype='application/json')
