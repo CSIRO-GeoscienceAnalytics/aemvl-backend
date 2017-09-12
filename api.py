@@ -85,9 +85,9 @@ def createLocation4326(x_component, y_component, project_id):
 
 def getComponentColumnNames(component_name, project_id):
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
-        column_suffixes =
-        list(range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
-             len(session['projects'][project_id]['data_definition'][component_name]) + 1))
+        column_suffixes = list(
+                                range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
+                                      len(session['projects'][project_id]['data_definition'][component_name]) + 1))
         return [component_name + "_" + str(n) for n in column_suffixes]
     else:
         return component_name
