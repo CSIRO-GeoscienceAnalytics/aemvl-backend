@@ -101,7 +101,7 @@ def list_test_datasets():
     return str([file_name[len('data/'):] for file_name in file_names])
 
 
-@app.route('/api/start_test_session', methods=['GET'])
+@app.route('/api/start_test_session', methods=['POST'])
 def start_test_session():
     test_dataset_name = request.form["test_dataset_name"]
 
@@ -135,6 +135,10 @@ def start_session(datafile_handle, configfile_handle):
         session['projects'] = {}
 
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
+    
+    if os.path.exists(project_path):
+        return Response(json.dumps({'response': 'ERROR', 'message': project_path + " already exists."}), mimetype='application/json') 
+    
     pathlib.Path(project_path).mkdir(parents=True)
 
     session['projects'][project_id] = {}
