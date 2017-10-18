@@ -1,4 +1,5 @@
 UPLOAD_FOLDER='./uploads'
+DOWNLOAD_FOLDER='./downloads'
 DEBUG=True
 SECRET_KEY='Change secret key here.'
 

@@ -2,7 +2,7 @@ import os
 import sqlite3
 import uuid
 import pandas
-from flask import request, session, redirect, Response
+from flask import request, session, redirect, Response, send_from_directory
 from app import app
 from osgeo import ogr, osr
 from werkzeug.datastructures import FileStorage
@@ -316,3 +316,18 @@ def applyMaskToAllChannelsBetweenFiducials():
     return Response(json.dumps({'response': 'OK',
                                 'message': 'changes applied'}),
                     mimetype='application/json')
+
+
+@app.route('/api/export', methods=['GET'])
+def export():
+    user_token = request.form["user_token"]
+    project_id = request.form["project_id"]
+
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
+    export_file_name = user_token + '_' + project_id + '.csv'
+    download_path = os.path.join(app.config['DOWNLOAD_FOLDER'], export_file_name)
+    with sqlite3.connect(database_path) as connection:
+        result_set = pandas.read_sql('SELECT * FROM dataframe', connection)
+        result_set.to_csv(download_path)
+        
+        return send_from_directory(app.config['DOWNLOAD_FOLDER'], export_file_name)

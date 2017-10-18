@@ -1,12 +1,22 @@
 #!/bin/bash
 
 # Run:
-# ./curl_test.sh http://conda:8080
+# ./curl_test.sh http://localhost:8080
 # ./curl_test.sh https://capdf.csiro.au/aemvl-backend
 
 URL_ROOT=$1
 
+if [ ! "$URL_ROOT" ]; then
+    echo "You must specify a URL. Try:"
+    echo './curl_test.sh http://localhost:8080'
+    exit
+fi
+
 echo '' > cookies.txt
+
+if [ -d "../uploads/testuser" ]; then
+    rm -r ../uploads/testuser
+fi
 
 curl -s \
     -c cookies.txt \
@@ -114,3 +124,14 @@ curl -s \
 echo $'\nThe next line will show the value of Access-Control-Allow-Origin if it has been set:'
 grep 'Access-Control-Allow-Origin' $TEMP
 rm $TEMP
+
+curl -s \
+    -O \
+    -b cookies.txt \
+    -c cookies.txt \
+    -H "Accept: text/csv" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
+    -X GET \
+    "${URL_ROOT}/api/export"
+
