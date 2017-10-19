@@ -33,7 +33,7 @@ curl -s \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
-    -X GET \
+    -X POST \
     "${URL_ROOT}/api/getLines"
 
 curl -s \
@@ -44,7 +44,7 @@ curl -s \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
-    -X GET \
+    -X POST \
     "${URL_ROOT}/api/getLine"
 
 curl -s \
@@ -82,13 +82,13 @@ curl -s \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
     -F "column_names=HM_Z,PLNI" \
-    -X GET \
+    -X POST \
     "${URL_ROOT}/api/getLine"
 
 curl -s \
     -c cookies.txt \
     -H "Accept: text/csv" \
-    -X GET \
+    -X POST \
     "${URL_ROOT}/api/list_test_datasets"
 
 curl -s \
@@ -108,7 +108,7 @@ curl -s \
     -F "project_id=TESTPROJECT2" \
     -F "line_number=200001" \
     -F "column_names=HM_Z,PLNI" \
-    -X GET \
+    -X POST \
     "${URL_ROOT}/api/getLine"
 
 # Do a test to work out what is set for Access-Control-Allow-Origin:
@@ -132,6 +132,6 @@ curl -s \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
-    -X GET \
+    -X POST \
     "${URL_ROOT}/api/export"
 

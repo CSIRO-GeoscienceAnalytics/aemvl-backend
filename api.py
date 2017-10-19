@@ -26,9 +26,9 @@ def generateResponse(result_set):
             result_set.to_html(index=False),
             mimetype='text/html')
     else:
-        raise Exception(
-            "Unsupported accept header provided: " +
-            str(accept_headers))
+        return Response(json.dumps({'response': 'ERROR',
+                                'message': "Unsupported accept header provided: " + str(accept_headers)}),
+                    mimetype='application/json')
 
 
 # Look up a DataDefinition column name in the FlightPlanInfo object to
@@ -93,7 +93,7 @@ def getComponentColumnNames(component_name, project_id):
         return component_name
 
 
-@app.route('/api/list_test_datasets', methods=['GET'])
+@app.route('/api/list_test_datasets', methods=['POST'])
 def list_test_datasets():
     file_names = glob.glob('data/*')
     file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
@@ -114,10 +114,14 @@ def start_test_session():
 def api_upload():
     # check that the POST request is complete:
     if 'datafile' not in request.files:
-        return "error: datafile not provided"
+        return Response(json.dumps({'response': 'ERROR',
+                                'message': "Datafile not provided"}),
+                    mimetype='application/json')
 
     if 'configfile' not in request.files:
-        return "error: configfile not provided"
+        return Response(json.dumps({'response': 'ERROR',
+                                'message': "Config file not provided"}),
+                    mimetype='application/json')
 
     datafile_handle = request.files['datafile']
     configfile_handle = request.files['configfile']
@@ -190,7 +194,7 @@ def start_session(datafile_handle, configfile_handle):
 
 
 # Used to create the map with all the flight lines:
-@app.route('/api/getLines', methods=['GET'])
+@app.route('/api/getLines', methods=['POST'])
 def getLines():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
@@ -209,7 +213,7 @@ def getLines():
 
 
 # Used to create the multi-line graph:
-@app.route('/api/getLine', methods=['GET'])
+@app.route('/api/getLine', methods=['POST'])
 def getLine():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
@@ -322,7 +326,7 @@ def applyMaskToAllChannelsBetweenFiducials():
                     mimetype='application/json')
 
 
-@app.route('/api/export', methods=['GET'])
+@app.route('/api/export', methods=['POST'])
 def export():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]

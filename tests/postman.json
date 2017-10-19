@@ -65,7 +65,7 @@
     {
       "id": "00000000-0000-0000-0000-000000000002",
       "url": "{{URL}}/api/getLines",
-      "method": "GET",
+      "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
         {
@@ -99,7 +99,7 @@
     {
       "id": "00000000-0000-0000-0000-000000000003",
       "url": "{{URL}}/api/getLine",
-      "method": "GET",
+      "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
         {
@@ -184,7 +184,7 @@
     {
       "id": "00000000-0000-0000-0000-000000000005",
       "url": "{{URL}}/api/getLine",
-      "method": "GET",
+      "method": "POST",
       "headers": ["Accept: text/csv"],
       "data": [
         {
