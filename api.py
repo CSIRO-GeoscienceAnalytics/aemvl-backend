@@ -103,6 +103,11 @@ def list_test_datasets():
 
 @app.route('/api/start_test_session', methods=['POST'])
 def start_test_session():
+    # Create the session if it doesn't exist:
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid1())
+        session['projects'] = {}
+        
     test_dataset_name = request.form["test_dataset_name"]
 
     with open('data/' + test_dataset_name + '.XYZ', 'rb') as datafile_handle:
@@ -112,6 +117,11 @@ def start_test_session():
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
+    # Create the session if it doesn't exist:
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid1())
+        session['projects'] = {}
+        
     # check that the POST request is complete:
     if 'datafile' not in request.files:
         return Response(json.dumps({'response': 'ERROR',
@@ -133,10 +143,7 @@ def start_session(datafile_handle, configfile_handle):
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
 
-    # Create the session if it doesn't exist:
-    if 'session_id' not in session:
-        session['session_id'] = str(uuid.uuid1())
-        session['projects'] = {}
+    
 
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
     
