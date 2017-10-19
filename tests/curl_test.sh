@@ -47,6 +47,7 @@ curl -s \
     -X POST \
     "${URL_ROOT}/api/getLine"
 
+exit
 curl -s \
     -b cookies.txt \
     -c cookies.txt \
@@ -86,11 +87,11 @@ curl -s \
     "${URL_ROOT}/api/getLine"
 
 curl -s \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     -X POST \
     "${URL_ROOT}/api/list_test_datasets"
 
+echo '' > cookies.txt
 curl -s \
     -c cookies.txt \
     -H "Accept: application/json" \
