@@ -12,24 +12,15 @@ if [ ! "$URL_ROOT" ]; then
     exit
 fi
 
-echo '' > cookies.txt
-
-if [ -d "../uploads/testuser" ]; then
-    rm -r ../uploads/testuser
-fi
-
 curl -s \
-    -c cookies.txt \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
-    -F "datafile=@../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ" \
+    -F "datafile=@../data/AUS_10004_CSIRO_EM_HM_reduced.xyz" \
     -F "configfile=@../data/AUS_10004_CSIRO_EM_HM_reduced.json" \
     "${URL_ROOT}/api/upload"
 
 curl -s \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
@@ -37,8 +28,6 @@ curl -s \
     "${URL_ROOT}/api/getLines"
 
 curl -s \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
@@ -47,10 +36,7 @@ curl -s \
     -X POST \
     "${URL_ROOT}/api/getLine"
 
-exit
 curl -s \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
@@ -64,8 +50,6 @@ curl -s \
     "${URL_ROOT}/api/applyMaskToFiducials"
 
 curl -s \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
@@ -76,8 +60,6 @@ curl -s \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
 
 curl -s \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
@@ -91,9 +73,7 @@ curl -s \
     -X POST \
     "${URL_ROOT}/api/list_test_datasets"
 
-echo '' > cookies.txt
 curl -s \
-    -c cookies.txt \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
@@ -102,8 +82,6 @@ curl -s \
     "${URL_ROOT}/api/start_test_session"
 
 curl -s \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
@@ -117,8 +95,6 @@ TEMP=$(mktemp)
 curl -s \
     -i \
     -I \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     "${URL_ROOT}/api/getLines" > $TEMP
 
@@ -128,8 +104,6 @@ rm $TEMP
 
 curl -s \
     -O \
-    -b cookies.txt \
-    -c cookies.txt \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \

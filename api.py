@@ -105,7 +105,7 @@ def list_test_datasets():
     
     return_value = []
     for file_name in file_names:
-        file_size = os.stat(file_name + '.XYZ').st_size
+        file_size = os.stat(file_name + '.xyz').st_size
         return_value.append({'file_name': file_name[len('data/'):], 'file_size_bytes': file_size, 'file_size_readable': human_readable_bytes(file_size) })
 
     return Response(json.dumps({'response': 'OK',
@@ -117,7 +117,7 @@ def list_test_datasets():
 def start_test_session():
     test_dataset_name = request.form["test_dataset_name"]
 
-    with open('data/' + test_dataset_name + '.XYZ', 'rb') as datafile_handle:
+    with open('data/' + test_dataset_name + '.xyz', 'rb') as datafile_handle:
         with open('data/' + test_dataset_name + '.json', 'rb') as configfile_handle:
             return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
 
@@ -221,6 +221,7 @@ def start_session(datafile_handle, configfile_handle):
 def getLines():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    read_config(user_token, project_id)
 
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
@@ -288,6 +289,7 @@ def getLine():
 def applyMaskToFiducials():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    read_config(user_token, project_id)
 
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
@@ -324,6 +326,7 @@ def applyMaskToFiducials():
 def applyMaskToAllChannelsBetweenFiducials():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    read_config(user_token, project_id)
 
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
@@ -354,6 +357,7 @@ def applyMaskToAllChannelsBetweenFiducials():
 def export():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    read_config(user_token, project_id)
 
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
     export_file_name = user_token + '_' + project_id + '.csv'
