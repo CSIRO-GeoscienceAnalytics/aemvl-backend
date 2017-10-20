@@ -13,7 +13,12 @@ import glob
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
 
-
+def human_readable_bytes(number_of_bytes):
+    for x in ['bytes', 'KiB', 'MiB', 'GiB', 'TiB']:
+        if number_of_bytes < 1024.0:
+            return "%3.1f %s" % (number_of_bytes, x)
+        number_of_bytes /= 1024.0
+        
 def generateResponse(result_set):
     accept_headers = request.headers.get('Accept').split(',')
 
@@ -97,10 +102,14 @@ def getComponentColumnNames(component_name, project_id):
 def list_test_datasets():
     file_names = glob.glob('data/*')
     file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
+    
+    return_value = []
+    for file_name in file_names:
+        file_size = os.stat(file_name + '.XYZ').st_size
+        return_value.append({'file_name': file_name[len('data/'):], 'file_size_bytes': file_size, 'file_size_readable': human_readable_bytes(file_size) })
 
-# TODO ADD SIZE TO THIS
     return Response(json.dumps({'response': 'OK',
-                                'return_value': [file_name[len('data/'):] for file_name in file_names]}),
+                                'return_value': return_value}),
                     mimetype='application/json')
 
 
