@@ -98,16 +98,14 @@ def list_test_datasets():
     file_names = glob.glob('data/*')
     file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
 
-    return str([file_name[len('data/'):] for file_name in file_names])
+# TODO ADD SIZE TO THIS
+    return Response(json.dumps({'response': 'OK',
+                                'return_value': [file_name[len('data/'):] for file_name in file_names]}),
+                    mimetype='application/json')
 
 
 @app.route('/api/start_test_session', methods=['POST'])
 def start_test_session():
-    # Create the session if it doesn't exist:
-    if 'session_id' not in session:
-        session['session_id'] = str(uuid.uuid1())
-        session['projects'] = {}
-        
     test_dataset_name = request.form["test_dataset_name"]
 
     with open('data/' + test_dataset_name + '.XYZ', 'rb') as datafile_handle:
@@ -117,11 +115,6 @@ def start_test_session():
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
-    # Create the session if it doesn't exist:
-    if 'session_id' not in session:
-        session['session_id'] = str(uuid.uuid1())
-        session['projects'] = {}
-        
     # check that the POST request is complete:
     if 'datafile' not in request.files:
         return Response(json.dumps({'response': 'ERROR',
@@ -139,27 +132,9 @@ def api_upload():
     return start_session(datafile_handle, configfile_handle)
 
 
-def start_session(datafile_handle, configfile_handle):
-    user_token = request.form["user_token"]
-    project_id = request.form["project_id"]
-
+def read_config(user_token, project_id):
+    configfile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'config.json')
     
-
-    project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
-    
-    if os.path.exists(project_path):
-        return Response(json.dumps({'response': 'ERROR', 'message': project_path + " already exists."}), mimetype='application/json') 
-    
-    pathlib.Path(project_path).mkdir(parents=True)
-
-    session['projects'][project_id] = {}
-
-    datafile_path = os.path.join(project_path, 'data.xyz')
-    datafile_handle.save(datafile_path)
-
-    configfile_path = os.path.join(project_path, 'config.json')
-    configfile_handle.save(configfile_path)
-
     json_content = None
     data_definition = None
     flight_plan_info = None
@@ -174,12 +149,44 @@ def start_session(datafile_handle, configfile_handle):
 
     flight_plan_info = json_content["FlightPlanInfo"]
     flight_plan_info["CoordinateSystem"] = flight_plan_info["CoordinateSystem"].upper() if isinstance(flight_plan_info["CoordinateSystem"], str) else flight_plan_info["CoordinateSystem"]
+    
+    # Create the session if it doesn't exist:
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid1())
+        session['projects'] = {}
+        
+    session['projects'][project_id] = {}
 
     session['projects'][project_id]['flight_plan_info'] = flight_plan_info
     session['projects'][project_id]['em_info'] = json_content["EMInfo"]
     session['projects'][project_id]['export_for_inversion'] = json_content["ExportForInversion"]
     session['projects'][project_id]['data_definition'] = data_definition
     session['projects'][project_id]['component_column_offsets'] = {}
+    
+    # Just doing this as a temp fix to force setting of session vars.
+    datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
+    dataframe = pandas.read_csv(datafile_path, header=None, delim_whitespace=True)
+    dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1, project_id), inplace=True)
+
+
+def start_session(datafile_handle, configfile_handle):
+    user_token = request.form["user_token"]
+    project_id = request.form["project_id"]
+    
+    project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
+    
+    if os.path.exists(project_path):
+        return Response(json.dumps({'response': 'ERROR', 'message': project_path + " already exists."}), mimetype='application/json') 
+    
+    pathlib.Path(project_path).mkdir(parents=True)
+
+    datafile_path = os.path.join(project_path, 'data.xyz')
+    datafile_handle.save(datafile_path)
+
+    configfile_path = os.path.join(project_path, 'config.json')
+    configfile_handle.save(configfile_path)
+
+    read_config(user_token, project_id)
 
     dataframe = pandas.read_csv(datafile_path, header=None, delim_whitespace=True)
 
@@ -224,6 +231,7 @@ def getLines():
 def getLine():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    read_config(user_token, project_id)
 
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
