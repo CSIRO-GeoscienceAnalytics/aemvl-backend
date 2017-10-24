@@ -71,7 +71,7 @@ curl -s \
 curl -s \
     -H "Accept: text/csv" \
     -X POST \
-    "${URL_ROOT}/api/list_test_datasets"
+    "${URL_ROOT}/api/listTestDatasets"
 
 curl -s \
     -H "Accept: application/json" \
@@ -79,7 +79,7 @@ curl -s \
     -F "project_id=TESTPROJECT2" \
     -F "test_dataset_name=AUS_10004_CSIRO_EM_HM_reduced" \
     -X POST \
-    "${URL_ROOT}/api/start_test_session"
+    "${URL_ROOT}/api/startTestSession"
 
 curl -s \
     -H "Accept: text/csv" \

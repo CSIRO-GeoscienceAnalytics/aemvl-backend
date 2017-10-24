@@ -24,6 +24,12 @@
         "PLNI": 73
     },
     
+    "CSVConfig":
+    {
+        "Separator": "w",
+        "HeaderLine": 0
+    },
+    
     "FlightPlanInfo":
     {
         "CoordinateSystem": 4326,
@@ -34,7 +40,6 @@
         "DigitalElevationModel": "DEM",
         "Fiducial": "Fiducial"
     },
-    
     
     "EMInfo": 
     [{

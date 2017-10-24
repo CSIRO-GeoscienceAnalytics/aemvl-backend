@@ -2,7 +2,7 @@ import os
 import sqlite3
 import uuid
 import pandas
-from flask import request, session, redirect, Response, send_from_directory
+from flask import request, session, jsonify, redirect, Response, send_from_directory
 from app import app
 from osgeo import ogr, osr
 from werkzeug.datastructures import FileStorage
@@ -19,7 +19,7 @@ def human_readable_bytes(number_of_bytes):
             return "%3.1f %s" % (number_of_bytes, x)
         number_of_bytes /= 1024.0
         
-def generateResponse(result_set):
+def generate_response(result_set):
     accept_headers = request.headers.get('Accept').split(',')
 
     if 'text/csv' in accept_headers:
@@ -31,15 +31,15 @@ def generateResponse(result_set):
             result_set.to_html(index=False),
             mimetype='text/html')
     else:
-        return Response(json.dumps({'response': 'ERROR',
-                                'message': "Unsupported accept header provided: " + str(accept_headers)}),
-                    mimetype='application/json')
+        return jsonify({
+            'response': 'ERROR',
+            'message': "Unsupported accept header provided: " + str(accept_headers)})
 
 
 # Look up a DataDefinition column name in the FlightPlanInfo object to
 # see if it is an alias of a well-known name. If it is we will return
 # the well-known name, otherwise return the original name:
-def getColumnWellKnownName(column_name, project_id):
+def get_column_well_known_name(column_name, project_id):
     for well_known_name, alias in session['projects'][project_id]['flight_plan_info'].items():
         if column_name == alias:
             return well_known_name
@@ -47,10 +47,10 @@ def getColumnWellKnownName(column_name, project_id):
     return column_name
 
 
-def getColumnNameByNumber(number, project_id):
+def get_column_name_by_number(number, project_id):
     for column_name, column_number in session['projects'][project_id]['data_definition'].items():
         if isinstance(column_number, int) and number == column_number:
-            return getColumnWellKnownName(column_name, project_id)
+            return get_column_well_known_name(column_name, project_id)
         if isinstance(column_number, list) and number in column_number:
             if column_name not in session['projects'][project_id]['component_column_offsets']:
                 # This has to be cast to a normal int otherwise it ends
@@ -61,7 +61,7 @@ def getColumnNameByNumber(number, project_id):
             return column_name + "_" + str(number - session['projects'][project_id]['component_column_offsets'][column_name])
 
 
-def createLocation4326(x_component, y_component, project_id):
+def create_location_4326(x_component, y_component, project_id):
     coordinateSystem = session['projects'][project_id]['flight_plan_info']["CoordinateSystem"]
 
     # If we're already using WGS84 / 4326 we don't need to perform a
@@ -88,7 +88,7 @@ def createLocation4326(x_component, y_component, project_id):
         return str(point.GetX()) + " " + str(point.GetY())
 
 
-def getComponentColumnNames(component_name, project_id):
+def get_component_column_names(component_name, project_id):
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
         column_suffixes = list(
                                 range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
@@ -98,7 +98,7 @@ def getComponentColumnNames(component_name, project_id):
         return component_name
 
 
-@app.route('/api/list_test_datasets', methods=['POST'])
+@app.route('/api/listTestDatasets', methods=['POST'])
 def list_test_datasets():
     file_names = glob.glob('data/*')
     file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
@@ -108,12 +108,12 @@ def list_test_datasets():
         file_size = os.stat(file_name + '.xyz').st_size
         return_value.append({'file_name': file_name[len('data/'):], 'file_size_bytes': file_size, 'file_size_readable': human_readable_bytes(file_size) })
 
-    return Response(json.dumps({'response': 'OK',
-                                'return_value': return_value}),
-                    mimetype='application/json')
+    return jsonify({
+        'response': 'OK',
+        'return_value': return_value})
 
 
-@app.route('/api/start_test_session', methods=['POST'])
+@app.route('/api/startTestSession', methods=['POST'])
 def start_test_session():
     test_dataset_name = request.form["test_dataset_name"]
 
@@ -126,14 +126,14 @@ def start_test_session():
 def api_upload():
     # check that the POST request is complete:
     if 'datafile' not in request.files:
-        return Response(json.dumps({'response': 'ERROR',
-                                'message': "Datafile not provided"}),
-                    mimetype='application/json')
+        return jsonify({
+            'response': 'ERROR',
+            'message': "Datafile not provided"})
 
     if 'configfile' not in request.files:
-        return Response(json.dumps({'response': 'ERROR',
-                                'message': "Config file not provided"}),
-                    mimetype='application/json')
+        return jsonify({
+            'response': 'ERROR',
+            'message': "Config file not provided"})
 
     datafile_handle = request.files['datafile']
     configfile_handle = request.files['configfile']
@@ -166,6 +166,7 @@ def read_config(user_token, project_id):
         
     session['projects'][project_id] = {}
 
+    session['projects'][project_id]['csv_config'] = json_content["CSVConfig"]
     session['projects'][project_id]['flight_plan_info'] = flight_plan_info
     session['projects'][project_id]['em_info'] = json_content["EMInfo"]
     session['projects'][project_id]['export_for_inversion'] = json_content["ExportForInversion"]
@@ -173,9 +174,16 @@ def read_config(user_token, project_id):
     session['projects'][project_id]['component_column_offsets'] = {}
     
     # Just doing this as a temp fix to force setting of session vars.
+    separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
+    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == 0 else 0
     datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
-    dataframe = pandas.read_csv(datafile_path, header=None, delim_whitespace=True)
-    dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1, project_id), inplace=True)
+    dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
+
+    new_column_names = []
+    for i in range(1, dataframe.shape[1]+1):
+        new_column_names.append(get_column_name_by_number(i, project_id))
+   
+    dataframe.columns = new_column_names
 
 
 def start_session(datafile_handle, configfile_handle):
@@ -185,7 +193,7 @@ def start_session(datafile_handle, configfile_handle):
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
     
     if os.path.exists(project_path):
-        return Response(json.dumps({'response': 'ERROR', 'message': project_path + " already exists."}), mimetype='application/json') 
+        return jsonify({'response': 'ERROR', 'message': project_path + " already exists."})
     
     pathlib.Path(project_path).mkdir(parents=True)
 
@@ -197,11 +205,17 @@ def start_session(datafile_handle, configfile_handle):
 
     read_config(user_token, project_id)
 
-    dataframe = pandas.read_csv(datafile_path, header=None, delim_whitespace=True)
+    separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
+    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == 0 else 0
+    datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
+    dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
-    # Apply the names to the columns:
-    dataframe.rename(columns=lambda old_column_number: getColumnNameByNumber(old_column_number+1, project_id), inplace=True)
-    dataframe['LOCATION_4326'] = dataframe.apply(lambda row: createLocation4326(row['XComponent'], row['YComponent'], project_id), axis=1)
+    new_column_names = []
+    for i in range(1, dataframe.shape[1]+1):
+        new_column_names.append(get_column_name_by_number(i, project_id))
+
+    dataframe.columns = new_column_names
+    dataframe['LOCATION_4326'] = dataframe.apply(lambda row: create_location_4326(row['XComponent'], row['YComponent'], project_id), axis=1)
 
     # Add a '_mask' column for every column that was generated from a
     # list in the DataDefinition:
@@ -213,12 +227,12 @@ def start_session(datafile_handle, configfile_handle):
     with sqlite3.connect(os.path.join(project_path, 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
 
-    return Response(json.dumps({'response': 'OK', 'message': None}), mimetype='application/json')
+    return jsonify({'response': 'OK', 'message': None})
 
 
 # Used to create the map with all the flight lines:
 @app.route('/api/getLines', methods=['POST'])
-def getLines():
+def get_lines():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
     read_config(user_token, project_id)
@@ -233,12 +247,12 @@ def getLines():
                 FROM    dataframe''',
             connection)
 
-        return generateResponse(result_set)
+        return generate_response(result_set)
 
 
 # Used to create the multi-line graph:
 @app.route('/api/getLine', methods=['POST'])
-def getLine():
+def get_line():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
     read_config(user_token, project_id)
@@ -252,7 +266,7 @@ def getLine():
     select_sql = ''
     for column_name in column_names:
         select_sql = select_sql + ('' if first else ',')
-        full_column_names = getComponentColumnNames(column_name, project_id)
+        full_column_names = get_component_column_names(column_name, project_id)
 
         if isinstance(full_column_names, list):
             unmasked_column = ''
@@ -282,11 +296,11 @@ def getLine():
 
         result_set = pandas.read_sql(sql, connection)
 
-        return generateResponse(result_set)
+        return generate_response(result_set)
 
 
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
-def applyMaskToFiducials():
+def apply_mask_to_fiducials():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
     read_config(user_token, project_id)
@@ -317,13 +331,13 @@ def applyMaskToFiducials():
             # number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
 
-    return Response(json.dumps({'response': 'OK',
-                                'message': 'changes applied'}),
-                    mimetype='application/json')
+    return jsonify({
+        'response': 'OK',
+        'message': 'changes applied'})
 
 
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
-def applyMaskToAllChannelsBetweenFiducials():
+def apply_mask_to_all_channels_between_fiducials():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
     read_config(user_token, project_id)
@@ -333,7 +347,7 @@ def applyMaskToAllChannelsBetweenFiducials():
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_names = getComponentColumnNames(mask_details['component_name'], project_id)
+    component_names = get_component_column_names(mask_details['component_name'], project_id)
     mask = mask_details['mask']
 
     fiducial_min, fiducial_max = mask_details['range']
@@ -348,9 +362,9 @@ def applyMaskToAllChannelsBetweenFiducials():
         # number could be non-unique
         cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
 
-    return Response(json.dumps({'response': 'OK',
-                                'message': 'changes applied'}),
-                    mimetype='application/json')
+    return jsonify({
+        'response': 'OK',
+        'message': 'changes applied'})
 
 
 @app.route('/api/export', methods=['POST'])
