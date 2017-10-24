@@ -138,16 +138,16 @@ def delete_project():
             rmtree(project_path)
             return jsonify({
                 'response': 'OK',
-                'return_value': 'Deleted project ' + project_id + '.'})
+                'message': 'Deleted project ' + project_id + '.'})
         except exception:
             return jsonify({
                 'response': 'ERROR',
-                'return_value': exception.message})
+                'message': exception.message})
     
     else:
         return jsonify({
             'response': 'ERROR',
-            'return_value': 'Project with id, ' + project_id + ', did not exist.'})
+            'message': 'Project with id, ' + project_id + ', did not exist.'})
 
 
 @app.route('/api/startTestSession', methods=['POST'])
