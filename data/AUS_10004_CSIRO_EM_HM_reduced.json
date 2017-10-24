@@ -27,7 +27,7 @@
     "CSVConfig":
     {
         "Separator": "w",
-        "HeaderLine": 0
+        "HeaderLine": false
     },
     
     "FlightPlanInfo":

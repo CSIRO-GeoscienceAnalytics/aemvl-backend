@@ -175,7 +175,7 @@ def read_config(user_token, project_id):
     
     # Just doing this as a temp fix to force setting of session vars.
     separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
-    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == 0 else 0
+    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == False else 0
     datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
     dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
@@ -206,7 +206,7 @@ def start_session(datafile_handle, configfile_handle):
     read_config(user_token, project_id)
 
     separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
-    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == 0 else 0
+    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == False else 0
     datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
     dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
