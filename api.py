@@ -9,6 +9,7 @@ from werkzeug.datastructures import FileStorage
 import pathlib
 import json
 import glob
+from shutil import rmtree
 
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
@@ -111,6 +112,42 @@ def list_test_datasets():
     return jsonify({
         'response': 'OK',
         'return_value': return_value})
+
+
+@app.route('/api/listProjects', methods=['POST'])
+def list_projects():
+    user_token = request.form["user_token"]
+    users_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, '*')
+    
+    project_ids = glob.glob(users_path)
+    project_ids = [project_id[len('./uploads/') + len(user_token) + 1:] for project_id in project_ids]
+        
+    return jsonify({
+        'response': 'OK',
+        'return_value': project_ids})
+
+
+@app.route('/api/deleteProject', methods=['POST'])
+def delete_project():
+    user_token = request.form["user_token"]
+    project_id = request.form["project_id"]
+    project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
+    
+    if os.path.isdir(project_path):
+        try:
+            rmtree(project_path)
+            return jsonify({
+                'response': 'OK',
+                'return_value': 'Deleted project ' + project_id + '.'})
+        except exception:
+            return jsonify({
+                'response': 'ERROR',
+                'return_value': exception.message})
+    
+    else:
+        return jsonify({
+            'response': 'ERROR',
+            'return_value': 'Project with id, ' + project_id + ', did not exist.'})
 
 
 @app.route('/api/startTestSession', methods=['POST'])
@@ -227,7 +264,7 @@ def start_session(datafile_handle, configfile_handle):
     with sqlite3.connect(os.path.join(project_path, 'database.db')) as connection:
         dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
 
-    return jsonify({'response': 'OK', 'message': None})
+    return jsonify({'response': 'OK', 'message': 'Started project ' + project_id + '.'})
 
 
 # Used to create the map with all the flight lines:

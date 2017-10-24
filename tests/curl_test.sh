@@ -69,7 +69,7 @@ curl -s \
     "${URL_ROOT}/api/getLine"
 
 curl -s \
-    -H "Accept: text/csv" \
+    -H "Accept: application/json" \
     -X POST \
     "${URL_ROOT}/api/listTestDatasets"
 
@@ -109,4 +109,24 @@ curl -s \
     -F "project_id=TESTPROJECT2" \
     -X POST \
     "${URL_ROOT}/api/export"
+
+curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -X POST \
+    "${URL_ROOT}/api/listProjects"
+    
+curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT" \
+    -X POST \
+    "${URL_ROOT}/api/deleteProject"
+
+curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
+    -X POST \
+    "${URL_ROOT}/api/deleteProject"
 
