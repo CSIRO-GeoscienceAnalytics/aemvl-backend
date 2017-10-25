@@ -143,7 +143,6 @@ def delete_project():
             return jsonify({
                 'response': 'ERROR',
                 'message': exception.message})
-    
     else:
         return jsonify({
             'response': 'ERROR',
@@ -153,7 +152,6 @@ def delete_project():
 @app.route('/api/startTestSession', methods=['POST'])
 def start_test_session():
     test_dataset_name = request.form["test_dataset_name"]
-
     with open('data/' + test_dataset_name + '.xyz', 'rb') as datafile_handle:
         with open('data/' + test_dataset_name + '.json', 'rb') as configfile_handle:
             return start_session(FileStorage(datafile_handle), FileStorage(configfile_handle))
@@ -226,7 +224,7 @@ def read_config(user_token, project_id):
 def start_session(datafile_handle, configfile_handle):
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
-    override = request.form.get("override", False).lower() in ['true', '1', 'override']
+    override = request.form.get("override", '0').lower() in ['true', '1', 'override']
     
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
     
