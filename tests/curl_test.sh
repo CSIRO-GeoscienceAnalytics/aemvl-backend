@@ -78,6 +78,7 @@ curl -s \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
     -F "test_dataset_name=AUS_10004_CSIRO_EM_HM_reduced" \
+    -F "override=False" \
     -X POST \
     "${URL_ROOT}/api/startTestSession"
 

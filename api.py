@@ -226,13 +226,19 @@ def read_config(user_token, project_id):
 def start_session(datafile_handle, configfile_handle):
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    override = request.form.get("override", False).lower() in ['true', '1', 'override']
     
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
     
     if os.path.exists(project_path):
-        return jsonify({'response': 'ERROR', 'message': project_path + " already exists."})
-    
-    pathlib.Path(project_path).mkdir(parents=True)
+        if override:
+            files = glob.glob(os.path.join(project_path, '*'))
+            for f in files:
+                os.remove(f)
+        else:
+            return jsonify({'response': 'ERROR', 'message': project_path + " already exists."})
+    else:
+        pathlib.Path(project_path).mkdir(parents=True)
 
     datafile_path = os.path.join(project_path, 'data.xyz')
     datafile_handle.save(datafile_path)
