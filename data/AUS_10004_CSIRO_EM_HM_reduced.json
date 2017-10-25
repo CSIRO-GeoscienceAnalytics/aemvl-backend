@@ -38,7 +38,8 @@
         "TxHeight": "TxHeight",
         "TxElevation": "TxElevation",
         "DigitalElevationModel": "DEM",
-        "Fiducial": "Fiducial"
+        "Fiducial": "Fiducial",
+        "FlightNumber": "FlightNumber"
     },
     
     "EMInfo": 
