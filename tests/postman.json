@@ -25,7 +25,7 @@
       "data": [
         {
           "key": "datafile",
-          "value": "../data/AUS_10004_CSIRO_EM_HM_reduced.XYZ",
+          "value": "../data/AUS_10004_CSIRO_EM_HM_reduced.xyz",
           "type": "file",
           "enabled": true
         },
@@ -84,8 +84,8 @@
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"LineNumber,Fiducial,LOCATION_4326\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"200301,261068.6,140.606238 -34.368704\");"
+        "tests[\"Body matches header row\"] = responseBody.has(\"fid,line,flight,location\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"261348.4,200101,20150522.02,140.560889 -34.333043\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -121,8 +121,8 @@
           "enabled": true
         },
         {
-          "key": "column_names",
-          "value": "HM_Z,PLNI",
+          "key": "component_name",
+          "value": "HM_Z",
           "type": "string",
           "enabled": true
         }
@@ -130,8 +130,8 @@
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches header row\"] = responseBody.has(\"Fiducial,HM_Z,HM_Z_mask,PLNI\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"261069.7,562.335 499.761 424.916 353.483\");"
+        "tests[\"Body matches header row\"] = responseBody.has(\"fid,dem,alt,em,em_mask\");",
+        "tests[\"Body matches known data\"] = responseBody.has(\"261068.7,42.12,96.99,479.081 426.012 357.413\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -206,8 +206,8 @@
           "enabled": true
         },
         {
-          "key": "column_names",
-          "value": "HM_Z,PLNI",
+          "key": "component_name",
+          "value": "HM_Z",
           "type": "string",
           "enabled": true
         }

@@ -304,14 +304,17 @@ def get_lines():
 
     with sqlite3.connect(database_path) as connection:
         result_set = pandas.read_sql(
-            ''' SELECT  LineNumber,
-                        Fiducial,
-                        LOCATION_4326
+            ''' SELECT  Fiducial AS fid,
+                        LineNumber AS line,
+                        FlightNumber AS flight,
+                        LOCATION_4326 AS location
                 FROM    dataframe''',
             connection)
 
         return generate_response(result_set)
 
+
+# TODO: add endpoint to deliver full config file.
 
 # Used to create the multi-line graph:
 @app.route('/api/getLine', methods=['POST'])
@@ -323,39 +326,26 @@ def get_line():
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     line_number = int(request.form["line_number"])
-    column_names = request.form["column_names"].split(',')
+    component_name = request.form["component_name"]
+       
+    full_column_names = get_component_column_names(component_name, project_id)
+    
+    unmasked_column = ''
+    masked_column = ''
 
-    first = True
-    select_sql = ''
-    for column_name in column_names:
-        select_sql = select_sql + ('' if first else ',')
-        full_column_names = get_component_column_names(column_name, project_id)
-
-        if isinstance(full_column_names, list):
-            unmasked_column = ''
-            masked_column = ''
-
-            for full_column_name in full_column_names:
-                unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + full_column_name
-                masked_column = masked_column + (' || \' \' || ' if masked_column else ',') + full_column_name + "_mask"
-
-            # TODO: These need to be consitently named as em and
-            # em_mask. The abilitiy to download lots of columns is
-            # apparently not needed... See pavel's email. Include other stuff, dem and alt are always needed. add endpoint to deliver full config file.
-            unmasked_column = unmasked_column + " AS " + column_name
-            masked_column = masked_column + " AS " + column_name + "_mask"
-
-            select_sql = select_sql + unmasked_column + masked_column
-
-        else:
-            select_sql = select_sql + full_column_names
-
-        first = False
+    for full_column_name in full_column_names:
+        unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + full_column_name
+        masked_column = masked_column + (' || \' \' || ' if masked_column else '') + full_column_name + "_mask"
 
     with sqlite3.connect(database_path) as connection:
-        sql = '''SELECT  Fiducial,''' + select_sql + '''
-                FROM    dataframe
-                WHERE   LineNumber = ''' + str(line_number)
+        sql = '''
+            SELECT  Fiducial AS fid,
+                    DigitalElevationModel as dem,
+                    TxElevation as alt,
+              ''' + unmasked_column + " AS em" + ''',
+              ''' + masked_column + " AS em_mask" + '''
+            FROM    dataframe
+            WHERE   LineNumber = ''' + str(line_number)
 
         result_set = pandas.read_sql(sql, connection)
 

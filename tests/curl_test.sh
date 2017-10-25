@@ -32,7 +32,7 @@ curl -s \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
-    -F "column_names=HM_Z,PLNI,DigitalElevationModel" \
+    -F "component_name=HM_Z" \
     -X POST \
     "${URL_ROOT}/api/getLine"
 
@@ -64,7 +64,7 @@ curl -s \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F "line_number=200301" \
-    -F "column_names=HM_Z,PLNI" \
+    -F "component_name=HM_Z" \
     -X POST \
     "${URL_ROOT}/api/getLine"
 
@@ -87,7 +87,7 @@ curl -s \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
     -F "line_number=200001" \
-    -F "column_names=HM_Z,PLNI" \
+    -F "component_name=HM_Z" \
     -X POST \
     "${URL_ROOT}/api/getLine"
 
