@@ -90,6 +90,9 @@ def create_location_4326(x_component, y_component, project_id):
 
 
 def get_component_column_names(component_name, project_id):
+    if component_name in session['projects'][project_id]['flight_plan_info']:
+        return component_name
+    
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
         column_suffixes = list(
                                 range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
@@ -338,7 +341,7 @@ def get_line():
 
             # TODO: These need to be consitently named as em and
             # em_mask. The abilitiy to download lots of columns is
-            # apparently not needed...
+            # apparently not needed... See pavel's email. Include other stuff, dem and alt are always needed. add endpoint to deliver full config file.
             unmasked_column = unmasked_column + " AS " + column_name
             masked_column = masked_column + " AS " + column_name + "_mask"
 
