@@ -15,7 +15,7 @@ outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
 
 def human_readable_bytes(number_of_bytes):
-    for x in ['bytes', 'KiB', 'MiB', 'GiB', 'TiB']:
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         if number_of_bytes < 1024.0:
             return "%3.1f %s" % (number_of_bytes, x)
         number_of_bytes /= 1024.0
