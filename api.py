@@ -9,7 +9,7 @@ from werkzeug.datastructures import FileStorage
 import pathlib
 import json
 import glob
-from shutil import rmtree
+from shutil import rmtree, copy
 
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
@@ -101,13 +101,16 @@ def get_component_column_names(component_name, project_id):
 
 @app.route('/api/listTestDatasets', methods=['POST'])
 def list_test_datasets():
-    file_names = glob.glob('data/*')
-    file_names = set([os.path.splitext(file_name)[0] for file_name in file_names])
+    file_names = glob.glob('data/*.xyz')
     
     return_value = []
     for file_name in file_names:
-        file_size = os.stat(file_name + '.xyz').st_size
-        return_value.append({'file_name': file_name[len('data/'):], 'file_size_bytes': file_size, 'file_size_readable': human_readable_bytes(file_size) })
+        file_size = os.stat(file_name).st_size
+        return_value.append({
+            'file_name': os.path.splitext(file_name)[0][len('data/'):],
+            'file_size_bytes': file_size,
+            'file_size_readable': human_readable_bytes(file_size),
+            'database_cached': os.path.isfile(os.path.join('data', file_name + '.db'))})
 
     return jsonify({
         'response': 'OK',
@@ -243,30 +246,46 @@ def start_session(datafile_handle, configfile_handle):
 
     configfile_path = os.path.join(project_path, 'config.json')
     configfile_handle.save(configfile_path)
+    
+    cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db' 
+    cached_database_path = os.path.join('data', cached_database_name)
+    
+    db_path = os.path.join(project_path, 'database.db')
+    
+    if datafile_handle.filename.startswith('data') and os.path.isfile(cached_database_path):
+        # There is a cached version of the database availble.
+        copy(os.path.join('data', cached_database_name), db_path)
+        
+    else:
+        # There was no cached version available, or the user has uploaded their own file:
+        read_config(user_token, project_id)
 
-    read_config(user_token, project_id)
+        separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
+        header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == False else 0
+        datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
+        dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
-    separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
-    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == False else 0
-    datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
-    dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
+        new_column_names = []
+        for i in range(1, dataframe.shape[1]+1):
+            new_column_names.append(get_column_name_by_number(i, project_id))
 
-    new_column_names = []
-    for i in range(1, dataframe.shape[1]+1):
-        new_column_names.append(get_column_name_by_number(i, project_id))
+        dataframe.columns = new_column_names
+        dataframe['LOCATION_4326'] = dataframe.apply(lambda row: create_location_4326(row['XComponent'], row['YComponent'], project_id), axis=1)
 
-    dataframe.columns = new_column_names
-    dataframe['LOCATION_4326'] = dataframe.apply(lambda row: create_location_4326(row['XComponent'], row['YComponent'], project_id), axis=1)
+        # Add a '_mask' column for every column that was generated from a
+        # list in the DataDefinition:
+        for key, value in session['projects'][project_id]['data_definition'].items():
+            if isinstance(value, list):
+                for column_number in value:
+                    dataframe[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
 
-    # Add a '_mask' column for every column that was generated from a
-    # list in the DataDefinition:
-    for key, value in session['projects'][project_id]['data_definition'].items():
-        if isinstance(value, list):
-            for column_number in value:
-                dataframe[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
+        with sqlite3.connect(db_path) as connection:
+            dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
 
-    with sqlite3.connect(os.path.join(project_path, 'database.db')) as connection:
-        dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
+        # Populates cache
+        if datafile_handle.filename.startswith('data'):
+            cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db' 
+            copy(db_path, os.path.join('data', cached_database_name))
 
     return jsonify({'response': 'OK', 'message': 'Started project ' + project_id + '.'})
 
