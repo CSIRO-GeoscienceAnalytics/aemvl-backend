@@ -321,8 +321,6 @@ def get_lines():
         return generate_response(result_set)
 
 
-# TODO: add endpoint to deliver full config file.
-
 # Used to create the multi-line graph:
 @app.route('/api/getLine', methods=['POST'])
 def get_line():
@@ -356,6 +354,34 @@ def get_line():
 
         result_set = pandas.read_sql(sql, connection)
 
+        return generate_response(result_set)
+
+
+@app.route('/api/getEMData', methods=['POST'])
+def get_em_data():
+    user_token = request.form["user_token"]
+    project_id = request.form["project_id"]
+    component_name = request.form["component_name"]
+    apply_mask = request.form.get("apply_mask", '0').lower() in ['true', '1', 'apply_mask']
+    read_config(user_token, project_id)
+
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
+
+    full_column_names = get_component_column_names(component_name, project_id)
+    
+    unmasked_column = ''
+    for full_column_name in full_column_names:
+        unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + \
+            "CASE WHEN " + full_column_name + "_mask THEN " + \
+            ("'null'" if apply_mask else full_column_name) + " ELSE " + full_column_name + " END"
+
+    with sqlite3.connect(database_path) as connection:
+        sql = '''
+            SELECT  LOCATION_4326 as location,
+              ''' + unmasked_column + " AS em" + '''
+            FROM    dataframe'''
+
+        result_set = pandas.read_sql(sql, connection)
         return generate_response(result_set)
 
 
@@ -441,6 +467,7 @@ def export():
         result_set.to_csv(download_path)
         
         return send_from_directory(app.config['DOWNLOAD_FOLDER'], export_file_name)
+
 
 @app.route('/api/getConfigFile', methods=['POST'])
 def get_config_file():
