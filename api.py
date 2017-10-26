@@ -396,7 +396,7 @@ def apply_mask_to_fiducials():
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_name = mask_details['component_name']
+    component_names = mask_details['component_names']
     fiducials_and_masks = mask_details['masks']
 
     with sqlite3.connect(database_path) as connection:
@@ -406,10 +406,15 @@ def apply_mask_to_fiducials():
 
             fiducial = fiducial_and_masks['fid']
             masks = fiducial_and_masks['mask']
-            index = 1
-            for mask in masks:
-                sql = sql + ('' if index == 1 else ',') + ' ' + component_name + '_' + str(index) + '_mask = ' + str(mask)
-                index = index + 1
+            
+            first = True
+            for component_name in component_names:
+                sql = sql + ('' if first else ',')
+                first = False
+                index = 1
+                for mask in masks:
+                    sql = sql + ('' if index == 1 else ',') + ' ' + component_name + '_' + str(index) + '_mask = ' + str(mask)
+                    index = index + 1
 
             sql = sql + ' WHERE LineNumber = ? AND Fiducial = ?'
 
@@ -417,9 +422,9 @@ def apply_mask_to_fiducials():
             # number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
 
-    return jsonify({
-        'response': 'OK',
-        'message': 'Changes applied'})
+        return jsonify({
+            'response': 'OK',
+            'message': 'Changes applied'})
 
 
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
@@ -433,20 +438,27 @@ def apply_mask_to_all_channels_between_fiducials():
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_names = get_component_column_names(mask_details['component_name'], project_id)
+    component_names = mask_details['component_names']
+    
+    full_component_names = []
+    for component_name in component_names:
+        full_component_names.append(get_component_column_names(component_name, project_id))
+
     mask = mask_details['mask']
 
     fiducial_min, fiducial_max = mask_details['range']
 
     with sqlite3.connect(database_path) as connection:
         cursor = connection.cursor()
-        sql = 'UPDATE dataframe SET ' + \
-            ("_mask = " + str(mask) + ",").join(component_names) + "_mask = " + str(mask) + \
-            ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
+        
+        for full_component_name in full_component_names:
+            sql = 'UPDATE dataframe SET ' + \
+                ("_mask = " + str(mask) + ",").join(full_component_name) + "_mask = " + str(mask) + \
+                ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
 
-        # TODO: do I need to send flight number as well because line
-        # number could be non-unique
-        cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
+            # TODO: do I need to send flight number as well because line
+            # number could be non-unique
+            cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
 
     return jsonify({
         'response': 'OK',

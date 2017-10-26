@@ -41,7 +41,7 @@ curl -s \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
-        "component_name": "HM_Z",
+        "component_names": ["HM_Z", "HM_X"],
         "masks":
         [
             { "fid": 261069.7, "mask": [0,-1,0,0,0,-1,0,0,0,-1,0,0,0,-1,0,-1,0,0,0,0,0,0,-1,0,0,-1,0]},
@@ -54,7 +54,7 @@ curl -s \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
     -F 'mask_details={"line_number": 200301,
-        "component_name": "HM_Z",
+        "component_names": ["HM_Z", "HM_X"],
         "mask": -1,
         "range": [261348.0, 261348.5]}' \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
