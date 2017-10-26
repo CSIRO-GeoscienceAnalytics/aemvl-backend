@@ -393,7 +393,7 @@ def apply_mask_to_fiducials():
 
     return jsonify({
         'response': 'OK',
-        'message': 'changes applied'})
+        'message': 'Changes applied'})
 
 
 @app.route('/api/applyMaskToAllChannelsBetweenFiducials', methods=['POST'])
@@ -424,7 +424,7 @@ def apply_mask_to_all_channels_between_fiducials():
 
     return jsonify({
         'response': 'OK',
-        'message': 'changes applied'})
+        'message': 'Changes applied'})
 
 
 @app.route('/api/export', methods=['POST'])
@@ -441,3 +441,17 @@ def export():
         result_set.to_csv(download_path)
         
         return send_from_directory(app.config['DOWNLOAD_FOLDER'], export_file_name)
+
+@app.route('/api/getConfigFile', methods=['POST'])
+def get_config_file():
+    user_token = request.form["user_token"]
+    project_id = request.form["project_id"]
+    configfile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'config.json')
+
+    with open(configfile_path) as json_file_handle:
+        json_content = json.load(json_file_handle)
+    
+    return jsonify({
+        'response': 'OK',
+        'return_value': json_content,
+        'message': 'Config provided for ' + project_id})
