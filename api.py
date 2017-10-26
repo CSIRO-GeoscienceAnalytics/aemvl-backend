@@ -517,13 +517,8 @@ def export():
                 result_set[column_name] = result_set.apply(lambda row: 1e99 if row[column_name] == -1 else 0, axis=1)
                 mask_columns.append(column_name)
 
-#        result_set['valid_data'] = result_set.apply(lambda row: 0 if sum(row[mask_columns]) == (len(mask_columns) * 1e99) else 1, axis=1)
-        result_set['valid_data'] = result_set.apply(lambda row: str(sum(row[mask_columns])), axis=1)
-        result_set['valid_data_'] = result_set.apply(lambda row: str(len(mask_columns) * 1e99), axis=1)
-        result_set['valid_data_equals'] = result_set.apply(lambda row: str(sum(row[mask_columns])) == str(len(mask_columns) * 1e99), axis=1)
-        
-        print(result_set)
-        
+        length_mask_columns = len(mask_columns)
+        result_set['valid_data'] = result_set.apply(lambda row: 0 if sum([value > 0 for value in row[mask_columns]]) == length_mask_columns else 1, axis=1)
         result_set.to_csv(download_path)
         
         return send_from_directory(app.config['DOWNLOAD_FOLDER'], export_file_name)
