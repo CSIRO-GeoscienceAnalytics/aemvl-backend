@@ -465,6 +465,42 @@ def apply_mask_to_all_channels_between_fiducials():
         'message': 'Changes applied'})
 
 
+@app.route('/api/applyMaskToChannels', methods=['POST'])
+def apply_mask_to_channels():
+    user_token = request.form["user_token"]
+    project_id = request.form["project_id"]
+    read_config(user_token, project_id)
+
+    database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
+
+    mask_details = json.loads(request.form["mask_details"])
+
+    line_number = mask_details['line_number']
+    component_names = mask_details['component_names']
+    
+    mask = mask_details['mask']
+
+    channel_min, channel_max = mask_details['range']
+
+    with sqlite3.connect(database_path) as connection:
+        cursor = connection.cursor()
+        
+        for component_name in component_names:
+            component_name = [component_name + '_' + str(x) + '_mask = ' + str(mask) for x in range(channel_min, channel_max +1)]
+
+            sql = 'UPDATE dataframe SET ' + \
+                (",").join(component_name) + \
+                ' WHERE LineNumber = ?'
+
+            # TODO: do I need to send flight number as well because line
+            # number could be non-unique
+            cursor.execute(sql, [line_number])
+
+    return jsonify({
+        'response': 'OK',
+        'message': 'Changes applied'})
+
+
 @app.route('/api/export', methods=['POST'])
 def export():
     user_token = request.form["user_token"]

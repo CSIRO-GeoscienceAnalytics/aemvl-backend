@@ -60,6 +60,16 @@ curl -s \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
 
 curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT" \
+    -F 'mask_details={"line_number": 200301,
+        "component_names": ["HM_Z", "HM_X"],
+        "mask": -1,
+        "range": [1, 4]}' \
+    "${URL_ROOT}/api/applyMaskToChannels"
+
+curl -s \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT" \
