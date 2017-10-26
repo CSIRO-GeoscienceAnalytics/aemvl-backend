@@ -68,7 +68,7 @@ def create_location_4326(x_component, y_component, project_id):
     # If we're already using WGS84 / 4326 we don't need to perform a
     # conversion:
     if coordinateSystem in ['WGS84', 4326]:
-        return str(x_component) + " " + str(y_component)
+        return str(y_component) + " " + str(x_component)
     else:
         # TODO: I'm assuming that flight_plan_info["CoordinateSystem"]
         # will be an EPSG number, not a name like GDA84, WGS84
@@ -86,7 +86,7 @@ def create_location_4326(x_component, y_component, project_id):
             outSpatialRef4326)
         point.Transform(coordTransform)
 
-        return str(point.GetX()) + " " + str(point.GetY())
+        return str(point.GetY()) + " " + str(point.GetX())
 
 
 def get_component_column_names(component_name, project_id):
