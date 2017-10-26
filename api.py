@@ -514,7 +514,7 @@ def export():
         mask_columns = []
         for column_name in result_set.columns:
             if column_name.endswith('_mask'):
-                result_set[column_name] = result_set.apply(lambda row: 1e99 if row[column_name] == -1 else 0, axis=1)
+                result_set[column_name] = result_set.apply(lambda row: 1e99 if row[column_name] == -1 else row[column_name[:-len('_mask')]], axis=1)
                 mask_columns.append(column_name)
 
         length_mask_columns = len(mask_columns)
