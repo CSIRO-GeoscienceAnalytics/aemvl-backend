@@ -85,7 +85,7 @@
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
         "tests[\"Body matches header row\"] = responseBody.has(\"fid,line,flight,location\");",
-        "tests[\"Body matches known data\"] = responseBody.has(\"261348.4,200101,20150522.02,140.560889 -34.333043\");"
+        "tests[\"Body matches known data\"] = responseBody.has(\"261348.4,200101,20150522.02,-34.333043 140.560889\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
@@ -170,7 +170,7 @@
       "dataMode": "params",
       "tests": [
         "tests[\"Status code is 200\"] = responseCode.code === 200;",
-        "tests[\"Body matches known data\"] = responseBody.has(\"changes applied\");"
+        "tests[\"Body matches known data\"] = responseBody.has(\"Changes applied\");"
       ],
       "preRequestScript": null,
       "currentHelper": "normal",
