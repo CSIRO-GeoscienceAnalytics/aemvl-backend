@@ -285,6 +285,12 @@ def start_session(datafile_handle, configfile_handle):
 
         with sqlite3.connect(db_path) as connection:
             dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
+            cursor = connection.cursor()
+            cursor.execute('CREATE INDEX `ix_JobNumber` ON `dataframe` (`JobNumber`)');
+            cursor.execute('CREATE INDEX `ix_Fiducial` ON `dataframe` (`Fiducial`)');
+            cursor.execute('CREATE INDEX `ix_LineNumber` ON `dataframe` (`LineNumber`)');
+            cursor.execute('CREATE INDEX `ix_FlightNumber` ON `dataframe` (`FlightNumber`)');
+            cursor.execute('CREATE UNIQUE INDEX `ix_unique_JobNumber_Fiducial_LineNumber_LineNumber` ON `dataframe` (`JobNumber`, `Fiducial`, `LineNumber`, `LineNumber`)');
 
         # Populates cache
         if datafile_handle.filename.startswith('data'):
