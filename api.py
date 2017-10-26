@@ -480,13 +480,11 @@ def apply_mask_to_channels():
     
     mask = mask_details['mask']
 
-    channel_min, channel_max = mask_details['range']
-
     with sqlite3.connect(database_path) as connection:
         cursor = connection.cursor()
         
         for component_name in component_names:
-            component_name = [component_name + '_' + str(x) + '_mask = ' + str(mask) for x in range(channel_min, channel_max +1)]
+            component_name = [component_name + '_' + str(x) + '_mask = ' + str(mask) for x in mask_details['channels']]
 
             sql = 'UPDATE dataframe SET ' + \
                 (",").join(component_name) + \

@@ -66,7 +66,7 @@ curl -s \
     -F 'mask_details={"line_number": 200301,
         "component_names": ["HM_Z", "HM_X"],
         "mask": -1,
-        "range": [1, 4]}' \
+        "channels": [1,2,3,4]}' \
     "${URL_ROOT}/api/applyMaskToChannels"
 
 curl -s \
