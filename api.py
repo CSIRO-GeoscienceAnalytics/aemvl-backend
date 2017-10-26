@@ -109,11 +109,12 @@ def list_test_datasets():
     return_value = []
     for file_name in file_names:
         file_size = os.stat(file_name).st_size
+        file_name_no_extension = os.path.splitext(file_name)[0]
         return_value.append({
-            'file_name': os.path.splitext(file_name)[0][len('data/'):],
+            'file_name': file_name_no_extension[len('data/'):],
             'file_size_bytes': file_size,
             'file_size_readable': human_readable_bytes(file_size),
-            'database_cached': os.path.isfile(os.path.join('data', file_name + '.db'))})
+            'database_cached': os.path.isfile(file_name_no_extension + '.db')})
 
     return jsonify({
         'response': 'OK',
