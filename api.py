@@ -420,8 +420,6 @@ def apply_mask_to_fiducials():
 
             sql = sql + ' WHERE LineNumber = ? AND Fiducial = ?'
 
-            # TODO: do I need to send flight number as well because line
-            # number could be non-unique
             cursor.execute(sql, (line_number, fiducial))
 
         return jsonify({
@@ -458,8 +456,6 @@ def apply_mask_to_all_channels_between_fiducials():
                 ("_mask = " + str(mask) + ",").join(full_component_name) + "_mask = " + str(mask) + \
                 ' WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?'
 
-            # TODO: do I need to send flight number as well because line
-            # number could be non-unique
             cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
 
     return jsonify({
@@ -492,8 +488,6 @@ def apply_mask_to_channels():
                 (",").join(component_name) + \
                 ' WHERE LineNumber = ?'
 
-            # TODO: do I need to send flight number as well because line
-            # number could be non-unique
             cursor.execute(sql, [line_number])
 
     return jsonify({
