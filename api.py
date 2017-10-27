@@ -14,12 +14,14 @@ from shutil import rmtree, copy
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
 
+
 def human_readable_bytes(number_of_bytes):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         if number_of_bytes < 1024.0:
             return "%3.1f %s" % (number_of_bytes, x)
         number_of_bytes /= 1024.0
-        
+
+
 def generate_response(result_set):
     accept_headers = request.headers.get('Accept').split(',')
 
@@ -92,7 +94,7 @@ def create_location_4326(x_component, y_component, project_id):
 def get_component_column_names(component_name, project_id):
     if component_name in session['projects'][project_id]['flight_plan_info']:
         return component_name
-    
+
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
         column_suffixes = list(
                                 range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
@@ -105,7 +107,7 @@ def get_component_column_names(component_name, project_id):
 @app.route('/api/listTestDatasets', methods=['POST'])
 def list_test_datasets():
     file_names = glob.glob('data/*.xyz')
-    
+
     return_value = []
     for file_name in file_names:
         file_size = os.stat(file_name).st_size
@@ -125,10 +127,10 @@ def list_test_datasets():
 def list_projects():
     user_token = request.form["user_token"]
     users_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, '*')
-    
+
     project_ids = glob.glob(users_path)
     project_ids = [project_id[len('./uploads/') + len(user_token) + 1:] for project_id in project_ids]
-        
+
     return jsonify({
         'response': 'OK',
         'return_value': project_ids})
@@ -139,7 +141,7 @@ def delete_project():
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
-    
+
     if os.path.isdir(project_path):
         try:
             rmtree(project_path)
@@ -185,7 +187,7 @@ def api_upload():
 
 def read_config(user_token, project_id):
     configfile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'config.json')
-    
+
     json_content = None
     data_definition = None
     flight_plan_info = None
@@ -200,12 +202,12 @@ def read_config(user_token, project_id):
 
     flight_plan_info = json_content["FlightPlanInfo"]
     flight_plan_info["CoordinateSystem"] = flight_plan_info["CoordinateSystem"].upper() if isinstance(flight_plan_info["CoordinateSystem"], str) else flight_plan_info["CoordinateSystem"]
-    
+
     # Create the session if it doesn't exist:
     if 'session_id' not in session:
         session['session_id'] = str(uuid.uuid1())
         session['projects'] = {}
-        
+
     session['projects'][project_id] = {}
 
     session['projects'][project_id]['csv_config'] = json_content["CSVConfig"]
@@ -214,17 +216,17 @@ def read_config(user_token, project_id):
     session['projects'][project_id]['export_for_inversion'] = json_content["ExportForInversion"]
     session['projects'][project_id]['data_definition'] = data_definition
     session['projects'][project_id]['component_column_offsets'] = {}
-    
+
     # Just doing this as a temp fix to force setting of session vars.
     separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
-    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == False else 0
+    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] is False else 0
     datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
     dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
     new_column_names = []
     for i in range(1, dataframe.shape[1]+1):
         new_column_names.append(get_column_name_by_number(i, project_id))
-   
+
     dataframe.columns = new_column_names
 
 
@@ -232,9 +234,9 @@ def start_session(datafile_handle, configfile_handle):
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
     override = request.form.get("override", '0').lower() in ['true', '1', 'override']
-    
+
     project_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id)
-    
+
     if os.path.exists(project_path):
         if override:
             files = glob.glob(os.path.join(project_path, '*'))
@@ -250,22 +252,22 @@ def start_session(datafile_handle, configfile_handle):
 
     configfile_path = os.path.join(project_path, 'config.json')
     configfile_handle.save(configfile_path)
-    
-    cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db' 
+
+    cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db'
     cached_database_path = os.path.join('data', cached_database_name)
-    
+
     db_path = os.path.join(project_path, 'database.db')
-    
+
     if datafile_handle.filename.startswith('data') and os.path.isfile(cached_database_path):
         # There is a cached version of the database availble.
         copy(os.path.join('data', cached_database_name), db_path)
-        
+
     else:
         # There was no cached version available, or the user has uploaded their own file:
         read_config(user_token, project_id)
 
         separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
-        header = None if session['projects'][project_id]['csv_config']['HeaderLine'] == False else 0
+        header = None if session['projects'][project_id]['csv_config']['HeaderLine'] is False else 0
         datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
         dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
@@ -286,15 +288,15 @@ def start_session(datafile_handle, configfile_handle):
         with sqlite3.connect(db_path) as connection:
             dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
             cursor = connection.cursor()
-            cursor.execute('CREATE INDEX `ix_JobNumber` ON `dataframe` (`JobNumber`)');
-            cursor.execute('CREATE INDEX `ix_Fiducial` ON `dataframe` (`Fiducial`)');
-            cursor.execute('CREATE INDEX `ix_LineNumber` ON `dataframe` (`LineNumber`)');
-            cursor.execute('CREATE INDEX `ix_FlightNumber` ON `dataframe` (`FlightNumber`)');
-            cursor.execute('CREATE UNIQUE INDEX `ix_unique_JobNumber_Fiducial_LineNumber_LineNumber` ON `dataframe` (`JobNumber`, `Fiducial`, `LineNumber`, `LineNumber`)');
+            cursor.execute('CREATE INDEX `ix_JobNumber` ON `dataframe` (`JobNumber`)')
+            cursor.execute('CREATE INDEX `ix_Fiducial` ON `dataframe` (`Fiducial`)')
+            cursor.execute('CREATE INDEX `ix_LineNumber` ON `dataframe` (`LineNumber`)')
+            cursor.execute('CREATE INDEX `ix_FlightNumber` ON `dataframe` (`FlightNumber`)')
+            cursor.execute('CREATE UNIQUE INDEX `ix_unique_JobNumber_Fiducial_LineNumber_LineNumber` ON `dataframe` (`JobNumber`, `Fiducial`, `LineNumber`, `LineNumber`)')
 
         # Populates cache
         if datafile_handle.filename.startswith('data'):
-            cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db' 
+            cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db'
             copy(db_path, os.path.join('data', cached_database_name))
 
     return jsonify({'response': 'OK', 'message': 'Started project ' + project_id + '.'})
@@ -332,9 +334,9 @@ def get_line():
 
     line_number = int(request.form["line_number"])
     component_name = request.form["component_name"]
-       
+
     full_column_names = get_component_column_names(component_name, project_id)
-    
+
     unmasked_column = ''
     masked_column = ''
 
@@ -368,7 +370,7 @@ def get_em_data():
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
 
     full_column_names = get_component_column_names(component_name, project_id)
-    
+
     unmasked_column = ''
     for full_column_name in full_column_names:
         unmasked_column = unmasked_column + (' || \' \' || ' if unmasked_column else '') + \
@@ -406,7 +408,7 @@ def apply_mask_to_fiducials():
 
             fiducial = fiducial_and_masks['fid']
             masks = fiducial_and_masks['mask']
-            
+
             first = True
             for component_name in component_names:
                 sql = sql + ('' if first else ',')
@@ -439,7 +441,7 @@ def apply_mask_to_all_channels_between_fiducials():
 
     line_number = mask_details['line_number']
     component_names = mask_details['component_names']
-    
+
     full_component_names = []
     for component_name in component_names:
         full_component_names.append(get_component_column_names(component_name, project_id))
@@ -450,7 +452,7 @@ def apply_mask_to_all_channels_between_fiducials():
 
     with sqlite3.connect(database_path) as connection:
         cursor = connection.cursor()
-        
+
         for full_component_name in full_component_names:
             sql = 'UPDATE dataframe SET ' + \
                 ("_mask = " + str(mask) + ",").join(full_component_name) + "_mask = " + str(mask) + \
@@ -477,12 +479,12 @@ def apply_mask_to_channels():
 
     line_number = mask_details['line_number']
     component_names = mask_details['component_names']
-    
+
     mask = mask_details['mask']
 
     with sqlite3.connect(database_path) as connection:
         cursor = connection.cursor()
-        
+
         for component_name in component_names:
             component_name = [component_name + '_' + str(x+1) + '_mask = ' + str(mask) for x in mask_details['channels']]
 
@@ -510,7 +512,7 @@ def export():
     download_path = os.path.join(app.config['DOWNLOAD_FOLDER'], export_file_name)
     with sqlite3.connect(database_path) as connection:
         result_set = pandas.read_sql('SELECT * FROM dataframe', connection)
-        
+
         mask_columns = []
         for column_name in result_set.columns:
             if column_name.endswith('_mask'):
@@ -520,7 +522,7 @@ def export():
         length_mask_columns = len(mask_columns)
         result_set['valid_data'] = result_set.apply(lambda row: 0 if sum([value > 0 for value in row[mask_columns]]) == length_mask_columns else 1, axis=1)
         result_set.to_csv(download_path)
-        
+
         return send_from_directory(app.config['DOWNLOAD_FOLDER'], export_file_name)
 
 
@@ -532,7 +534,7 @@ def get_config_file():
 
     with open(configfile_path) as json_file_handle:
         json_content = json.load(json_file_handle)
-    
+
     return jsonify({
         'response': 'OK',
         'return_value': json_content,
