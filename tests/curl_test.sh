@@ -114,10 +114,22 @@ grep 'Access-Control-Allow-Origin' $TEMP
 rm $TEMP
 
 curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
+    -F 'mask_details={"line_number": 200301,
+        "component_names": ["HM_Z", "HM_X"],
+        "mask": -1,
+        "channels": [0,1,2,3,4]}' \
+    "${URL_ROOT}/api/applyMaskToChannels"
+
+
+curl -s \
     -O \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
+    -F "columns_to_export=JobNumber,Fiducial,DEM,HM_Z,HM_X" \
     -X POST \
     "${URL_ROOT}/api/export"
 

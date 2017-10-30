@@ -10,6 +10,8 @@ import pathlib
 import json
 import glob
 from shutil import rmtree, copy
+import re
+import math
 
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
@@ -495,27 +497,77 @@ def apply_mask_to_channels():
         'message': 'Changes applied'})
 
 
+def get_std_error(channel, channel_mask, additive_error, multiplicative_error):
+    if channel_mask == -1:
+        return 1e99
+
+    return abs(math.sqrt(pow(additive_error, 2) + pow(multiplicative_error * channel, 2)))
+
+
 @app.route('/api/export', methods=['POST'])
 def export():
+    regex = re.compile(r'_[A-Z]+$', re.IGNORECASE)
+
     user_token = request.form["user_token"]
     project_id = request.form["project_id"]
+    # TODO: change to JSON?
+    columns_to_export = request.form["columns_to_export"].split(',')
     read_config(user_token, project_id)
+
+    fields_to_select = []
+    valid_data_config = {}
+    for column_to_export in columns_to_export:
+        # Find out if column needs to be expanded:
+        column_numbers = session['projects'][project_id]['data_definition'][column_to_export]
+        if isinstance(column_numbers, list):
+            offset = column_numbers[0]-1
+            column_numbers = [column_number - offset for column_number in column_numbers]
+
+            channels = [column_to_export + '_' + str(column_number) for column_number in column_numbers]
+
+            additive_error = None
+            multiplicative_error = None
+            # Find the AdditiveError and MultiplicativeError from EMInfo
+            for em_info in session['projects'][project_id]['em_info']:
+                for component in em_info['Components']:
+                    if component['Name'] == column_to_export:
+                        additive_error = component['Descriptor']['AdditiveError']
+                        multiplicative_error = component['Descriptor']['MultiplicativeError']
+                        break
+
+                if additive_error:
+                    break
+
+            channels_masked = [
+                'get_std_error(' +
+                column_to_export + '_' + str(column_number) + ', ' +
+                column_to_export + '_' + str(column_number) + '_mask, ' +
+                str(additive_error[column_number - 1]) + ', ' +
+                str(multiplicative_error[column_number - 1]) +
+                ') AS ' + column_to_export + '_' + str(column_number) + '_std' for column_number in column_numbers]
+
+            fields_to_select = fields_to_select + channels + channels_masked
+
+            em_abbreviation = regex.sub('', column_to_export)
+            if em_abbreviation not in valid_data_config:
+                valid_data_config[em_abbreviation] = []
+
+            valid_data_config[em_abbreviation] = valid_data_config[em_abbreviation] + [column_to_export + '_' + str(column_number) + '_mask' for column_number in column_numbers]
+        else:
+            column_name = get_column_well_known_name(column_to_export, project_id)
+            fields_to_select.append(column_name)
+
+    for em_abbreviation, columns in valid_data_config.items():
+        fields_to_select.append(' * '.join(columns) + ' == 0 AS ' + em_abbreviation + '_VALID_DATA')
 
     database_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'database.db')
     export_file_name = user_token + '_' + project_id + '.csv'
     download_path = os.path.join(app.config['DOWNLOAD_FOLDER'], export_file_name)
     with sqlite3.connect(database_path) as connection:
-        result_set = pandas.read_sql('SELECT * FROM dataframe', connection)
+        connection.create_function('get_std_error', 4, get_std_error)
+        result_set = pandas.read_sql('SELECT ' + ', '.join(fields_to_select) + ' FROM dataframe', connection)
 
-        mask_columns = []
-        for column_name in result_set.columns:
-            if column_name.endswith('_mask'):
-                result_set[column_name] = result_set.apply(lambda row: 1e99 if row[column_name] == -1 else row[column_name[:-len('_mask')]], axis=1)
-                mask_columns.append(column_name)
-
-        length_mask_columns = len(mask_columns)
-        result_set['valid_data'] = result_set.apply(lambda row: 0 if sum([value > 0 for value in row[mask_columns]]) == length_mask_columns else 1, axis=1)
-        result_set.to_csv(download_path)
+        result_set.to_csv(download_path, index=False)
 
         return send_from_directory(app.config['DOWNLOAD_FOLDER'], export_file_name)
 
