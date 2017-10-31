@@ -389,6 +389,28 @@ def get_em_data():
         return generate_response(result_set)
 
 
+# Takes a list of component_names and adds any required cascade targets.
+# For example: if HM_Z is provided and the config file indicates that
+# HM_Z should CascadeMaskingTo HM_X then ["HM_Z", "HM_X"] will be
+# returned.
+def expand_component_names(project_id, component_names):
+    cascade_rules = {}
+    for em_info in session['projects'][project_id]['em_info']:
+        for component in em_info['Components']:
+            if 'CascadeMaskingTo' in component:
+                cascade_rules[component['Name']] = component['CascadeMaskingTo']
+
+    new_component_names = []
+    for component_name in component_names:
+        new_component_names.append(component_name)
+        if component_name in cascade_rules:
+            for cascade_target in cascade_rules[component_name]:
+                if cascade_target not in component_names:
+                    new_component_names.append(cascade_target)
+                    
+    return new_component_names
+
+
 @app.route('/api/applyMaskToFiducials', methods=['POST'])
 def apply_mask_to_fiducials():
     user_token = request.form["user_token"]
@@ -400,7 +422,7 @@ def apply_mask_to_fiducials():
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_names = mask_details['component_names']
+    component_names = expand_component_names(project_id, mask_details['component_names'])
     fiducials_and_masks = mask_details['masks']
 
     with sqlite3.connect(database_path) as connection:
@@ -440,7 +462,7 @@ def apply_mask_to_all_channels_between_fiducials():
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_names = mask_details['component_names']
+    component_names = expand_component_names(project_id, mask_details['component_names'])
 
     full_component_names = []
     for component_name in component_names:
@@ -476,7 +498,7 @@ def apply_mask_to_channels():
     mask_details = json.loads(request.form["mask_details"])
 
     line_number = mask_details['line_number']
-    component_names = mask_details['component_names']
+    component_names = expand_component_names(project_id, mask_details['component_names'])
 
     mask = mask_details['mask']
 
