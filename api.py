@@ -99,8 +99,8 @@ def get_component_column_names(component_name, project_id):
 
     if isinstance(session['projects'][project_id]['data_definition'][component_name], list):
         column_suffixes = list(
-                                range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
-                                      len(session['projects'][project_id]['data_definition'][component_name]) + 1))
+            range(session['projects'][project_id]['data_definition'][component_name][0] - session['projects'][project_id]['component_column_offsets'][component_name],
+            len(session['projects'][project_id]['data_definition'][component_name]) + 1))
         return [component_name + "_" + str(n) for n in column_suffixes]
     else:
         return component_name
@@ -407,7 +407,7 @@ def expand_component_names(project_id, component_names):
             for cascade_target in cascade_rules[component_name]:
                 if cascade_target not in component_names:
                     new_component_names.append(cascade_target)
-                    
+
     return new_component_names
 
 

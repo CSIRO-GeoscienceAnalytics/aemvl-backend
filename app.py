@@ -21,3 +21,11 @@ def get_http_exception_handler(app):
 
 # Override the HTTP exception handler.
 app.handle_http_exception = get_http_exception_handler(app)
+
+
+@app.errorhandler(500)
+def internal_error(exception):
+    return jsonify({
+        'response': 'ERROR',
+        'http_code': 500,
+        'message': str(exception)}), 500
