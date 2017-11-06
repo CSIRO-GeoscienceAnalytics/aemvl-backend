@@ -123,6 +123,15 @@ curl -s \
         "channels": [0,1,2,3,4]}' \
     "${URL_ROOT}/api/applyMaskToChannels"
 
+curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
+    -F 'mask_details={"line_number": 200001,
+        "component_names": ["HM_Z"],
+        "mask": -1,
+        "range": [194273.90, 194274.60]}' \
+    "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
 
 curl -s \
     -O \
