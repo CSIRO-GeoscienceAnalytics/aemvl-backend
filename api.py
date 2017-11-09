@@ -523,6 +523,9 @@ def get_std_error(channel, channel_mask, additive_error, multiplicative_error):
     if channel_mask == -1:
         return 1e99
 
+    if channel is None:
+        return None
+
     return abs(math.sqrt(pow(additive_error, 2) + pow(multiplicative_error * channel, 2)))
 
 
