@@ -2,7 +2,7 @@ import os
 import sqlite3
 import uuid
 import pandas
-from flask import request, session, jsonify, redirect, Response, send_from_directory
+from flask import request, jsonify, redirect, Response, send_from_directory
 from app import app
 from osgeo import ogr, osr
 from werkzeug.datastructures import FileStorage
@@ -16,6 +16,7 @@ import math
 outSpatialRef4326 = osr.SpatialReference()
 outSpatialRef4326.ImportFromEPSG(4326)
 
+session = {}
 
 def human_readable_bytes(number_of_bytes):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
