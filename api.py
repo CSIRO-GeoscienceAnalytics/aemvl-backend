@@ -189,6 +189,16 @@ def api_upload():
 
 
 def read_config(user_token, project_id):
+    global session
+    sessionfile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'session.json')
+
+    if os.path.exists(sessionfile_path):
+        with open(sessionfile_path) as json_file_handle:
+            session = json.load(json_file_handle)
+
+        if project_id in session['projects']:
+            return
+
     configfile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'config.json')
 
     json_content = None
@@ -219,18 +229,9 @@ def read_config(user_token, project_id):
     session['projects'][project_id]['export_for_inversion'] = json_content["ExportForInversion"]
     session['projects'][project_id]['data_definition'] = data_definition
     session['projects'][project_id]['component_column_offsets'] = {}
-
-    # Just doing this as a temp fix to force setting of session vars.
-    separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
-    header = None if session['projects'][project_id]['csv_config']['HeaderLine'] is False else 0
-    datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
-    dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
-
-    new_column_names = []
-    for i in range(1, dataframe.shape[1]+1):
-        new_column_names.append(get_column_name_by_number(i, project_id))
-
-    dataframe.columns = new_column_names
+    
+    with open(sessionfile_path, 'w') as handle:
+        json.dump(session, handle, ensure_ascii=False)
 
 
 def start_session(datafile_handle, configfile_handle):
@@ -260,15 +261,19 @@ def start_session(datafile_handle, configfile_handle):
     cached_database_path = os.path.join('data', cached_database_name)
 
     db_path = os.path.join(project_path, 'database.db')
+    cached_component_column_offsets_path = os.path.join('data', os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.component_column_offsets.json')
 
+    read_config(user_token, project_id)
+    
     if datafile_handle.filename.startswith('data') and os.path.isfile(cached_database_path):
         # There is a cached version of the database availble.
         copy(os.path.join('data', cached_database_name), db_path)
 
+        with open(cached_component_column_offsets_path) as json_file_handle:
+           session['projects'][project_id]['component_column_offsets'] = json.load(json_file_handle)
+
     else:
         # There was no cached version available, or the user has uploaded their own file:
-        read_config(user_token, project_id)
-
         separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
         header = None if session['projects'][project_id]['csv_config']['HeaderLine'] is False else 0
         datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
@@ -297,10 +302,17 @@ def start_session(datafile_handle, configfile_handle):
             cursor.execute('CREATE INDEX `ix_FlightNumber` ON `dataframe` (`FlightNumber`)')
             cursor.execute('CREATE UNIQUE INDEX `ix_unique_JobNumber_Fiducial_LineNumber_LineNumber` ON `dataframe` (`JobNumber`, `Fiducial`, `LineNumber`, `LineNumber`)')
 
-        # Populates cache
+        # Populate cache:
         if datafile_handle.filename.startswith('data'):
             cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db'
             copy(db_path, os.path.join('data', cached_database_name))
+
+            with open(cached_component_column_offsets_path, 'w') as handle:
+                json.dump(session['projects'][project_id]['component_column_offsets'], handle, ensure_ascii=False)
+
+    sessionfile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'session.json')
+    with open(sessionfile_path, 'w') as handle:
+        json.dump(session, handle, ensure_ascii=False)
 
     return jsonify({'response': 'OK', 'message': 'Started project ' + project_id + '.'})
 

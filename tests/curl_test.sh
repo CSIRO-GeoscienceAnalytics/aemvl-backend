@@ -147,7 +147,7 @@ curl -s \
     -F "user_token=testuser" \
     -X POST \
     "${URL_ROOT}/api/listProjects"
-    
+
 curl -s \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
