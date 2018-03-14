@@ -277,30 +277,40 @@ def start_session(datafile_handle, configfile_handle):
         separator = '\s+' if session['projects'][project_id]['csv_config']['Separator'] == 'w' else session['projects'][project_id]['csv_config']['Separator']
         header = None if session['projects'][project_id]['csv_config']['HeaderLine'] is False else 0
         datafile_path = os.path.join(app.config['UPLOAD_FOLDER'], user_token, project_id, 'data.xyz')
-        dataframe = pandas.read_csv(datafile_path, sep=separator, header=header)
 
+        number_of_lines = 100000
         new_column_names = []
-        for i in range(1, dataframe.shape[1]+1):
-            new_column_names.append(get_column_name_by_number(i, project_id))
+        for dataframe_chunk in pandas.read_csv(datafile_path, sep=separator, header=header, chunksize=number_of_lines):
 
-        dataframe.columns = new_column_names
-        dataframe['LOCATION_4326'] = dataframe.apply(lambda row: create_location_4326(row['XComponent'], row['YComponent'], project_id), axis=1)
+            # On the first iteration create the sqlite file and indices.
+            if not new_column_names:
+                for i in range(1, dataframe_chunk.shape[1]+1):
+                    new_column_names.append(get_column_name_by_number(i, project_id))
 
-        # Add a '_mask' column for every column that was generated from a
-        # list in the DataDefinition:
-        for key, value in session['projects'][project_id]['data_definition'].items():
-            if isinstance(value, list):
-                for column_number in value:
-                    dataframe[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
+            dataframe_chunk.columns = new_column_names
+            dataframe_chunk['LOCATION_4326'] = dataframe_chunk.apply(lambda row: create_location_4326(row['XComponent'], row['YComponent'], project_id), axis=1)
 
-        with sqlite3.connect(db_path) as connection:
-            dataframe.to_sql("dataframe", connection, index=False, if_exists='replace')
-            cursor = connection.cursor()
-            cursor.execute('CREATE INDEX `ix_JobNumber` ON `dataframe` (`JobNumber`)')
-            cursor.execute('CREATE INDEX `ix_Fiducial` ON `dataframe` (`Fiducial`)')
-            cursor.execute('CREATE INDEX `ix_LineNumber` ON `dataframe` (`LineNumber`)')
-            cursor.execute('CREATE INDEX `ix_FlightNumber` ON `dataframe` (`FlightNumber`)')
-            cursor.execute('CREATE UNIQUE INDEX `ix_unique_JobNumber_Fiducial_LineNumber_LineNumber` ON `dataframe` (`JobNumber`, `Fiducial`, `LineNumber`, `LineNumber`)')
+            # Add a '_mask' column for every column that was generated from a
+            # list in the DataDefinition:
+            for key, value in session['projects'][project_id]['data_definition'].items():
+                if isinstance(value, list):
+                    for column_number in value:
+                        dataframe_chunk[key + "_" + str(column_number - session['projects'][project_id]['component_column_offsets'][key]) + "_mask"] = False
+
+            if not new_column_names:
+                with sqlite3.connect(db_path) as connection:
+                    dataframe_chunk.to_sql("dataframe", connection, index=False, if_exists='replace')
+                    cursor = connection.cursor()
+                    cursor.execute('CREATE INDEX `ix_JobNumber` ON `dataframe` (`JobNumber`)')
+                    cursor.execute('CREATE INDEX `ix_Fiducial` ON `dataframe` (`Fiducial`)')
+                    cursor.execute('CREATE INDEX `ix_LineNumber` ON `dataframe` (`LineNumber`)')
+                    cursor.execute('CREATE INDEX `ix_FlightNumber` ON `dataframe` (`FlightNumber`)')
+                    cursor.execute('CREATE UNIQUE INDEX `ix_unique_JobNumber_Fiducial_LineNumber_LineNumber` ON `dataframe` (`JobNumber`, `Fiducial`, `LineNumber`, `LineNumber`)')
+
+            # Now just insert all the new lines to the SQL file
+            else:
+                with sqlite3.connect(db_path) as connection:
+                    dataframe_chunk.to_sql("dataframe", connection, index=False, if_exists='append')
 
         # Populate cache:
         if datafile_handle.filename.startswith('data'):
