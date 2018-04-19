@@ -222,7 +222,6 @@ def read_config(user_token, project_id):
         session['projects'] = {}
 
     session['projects'][project_id] = {}
-
     session['projects'][project_id]['csv_config'] = json_content["CSVConfig"]
     session['projects'][project_id]['flight_plan_info'] = flight_plan_info
     session['projects'][project_id]['em_info'] = json_content["EMInfo"]
