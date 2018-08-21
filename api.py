@@ -154,7 +154,7 @@ def delete_project():
         except Exception as exception:
             return jsonify({
                 'response': 'ERROR',
-                'message': exception.message})
+                'message': str(exception)})
     else:
         return jsonify({
             'response': 'ERROR',
