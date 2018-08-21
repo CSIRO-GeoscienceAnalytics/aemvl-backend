@@ -10,7 +10,6 @@ geotiff
 hdf4
 hdf5
 itsdangerous
-#jbig
 jinja2
 jpeg
 kealib
