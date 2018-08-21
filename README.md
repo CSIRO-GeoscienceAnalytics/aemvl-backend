@@ -14,10 +14,11 @@ Linux Only:
 
 Windows Only:  
 `activate aemvl-backend`  
-
+`conda install --file requirements.txt`  
+`Set environment variable: GDAL_DATA=C:\Anaconda3\envs\aemvl-backend\Library\share\epsg_csv`  
+  
 `conda install --file requirements.txt`  
 `cd aemvl-backend`  
 `cp aemvl-backend.config.default aemvl-backend.config`  
 `# Edit the settings in aemvl-backend.config`  
-`python skeleton.py`  
 `python main.py`
