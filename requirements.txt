@@ -26,7 +26,6 @@ proj4
 python
 python-dateutil
 pytz
-#readline
 setuptools
 six
 sqlite
