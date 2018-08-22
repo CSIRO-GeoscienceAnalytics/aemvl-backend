@@ -14,8 +14,8 @@ Linux Only:
 
 Windows Only:  
 `activate aemvl-backend`  
-`conda install --file requirements.txt`  
-`Set environment variable: GDAL_DATA=C:\Anaconda3\envs\aemvl-backend\Library\share\epsg_csv`  
+
+`Set environment variable if not set. E.g.: GDAL_DATA=C:\Anaconda3\envs\aemvl-backend\Library\share\epsg_csv`  
   
 `conda install --file requirements.txt`  
 `cd aemvl-backend`  
