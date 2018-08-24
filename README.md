@@ -23,5 +23,8 @@ Windows Only:
 `conda install --file requirements.txt`  
 `cp aemvl-backend.config.default aemvl-backend.config`  
 `# Edit the settings in aemvl-backend.config`  
-`python main.py`
+`python main.py`  
 
+Run tests (if on Windows you'll need to install bash and curl. I recommend using https://www.cygwin.com/ to install them):  
+`cd tests`  
+`./curl_test.sh http://localhost:8080`
