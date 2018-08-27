@@ -264,7 +264,8 @@ def start_session(datafile_handle, configfile_handle):
 
     read_config(user_token, project_id)
     
-    if datafile_handle.filename.startswith('data') and os.path.isfile(cached_database_path):
+    is_test_dataset = datafile_handle.filename.startswith('data')
+    if is_test_dataset and os.path.isfile(cached_database_path):
         # There is a cached version of the database availble.
         copy(os.path.join('data', cached_database_name), db_path)
 
@@ -312,7 +313,7 @@ def start_session(datafile_handle, configfile_handle):
                     dataframe_chunk.to_sql("dataframe", connection, index=False, if_exists='append')
 
         # Populate cache:
-        if datafile_handle.filename.startswith('data'):
+        if is_test_dataset:
             cached_database_name = os.path.splitext(datafile_handle.filename)[0][len('data/'):] + '.db'
             copy(db_path, os.path.join('data', cached_database_name))
 
