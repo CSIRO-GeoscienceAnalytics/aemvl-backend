@@ -2,7 +2,7 @@ import numpy as np
 import multiprocessing as mp
 
 
-def detect_noise_sections_for_survey_par(
+def detect_noise_sections_for_survey_pool(
     line_numbers,
     data: np.ndarray,
     low_threshold: float = 0.003,
@@ -14,27 +14,18 @@ def detect_noise_sections_for_survey_par(
     """
     Whole survey noise detection with paralel processing
     """
-    output = mp.Queue()
+    pool = mp.Pool(4)
 
-    processes = [mp.Process(target=detect_noise_sections_for_line_par, args=(line_numbers[i], data[i], output, low_threshold, high_threshold, windsize, step, channel_step, channel_group_size)) for i in range(len(data))]
-
-    # Run processes
-    for p in processes:
-        p.start()
-
-    # Exit the completed processes
-    for p in processes:
-        p.join()
+    results = [pool.apply_async(detect_noise_sections_for_line_par, args=(line_numbers[i], data[i], low_threshold, high_threshold, windsize, step, channel_step, channel_group_size)) for i in range(len(data))]
 
     # Get process results from the output queue
-    results = [output.get() for p in processes]
+    results = [p.get() for p in results]
 
     return results
 
 def detect_noise_sections_for_line_par(
     line_number,
     data,
-    output,
     low_threshold: float = 0.003,
     high_threshold: float = 0.01,
     windsize: int = 20,
@@ -45,7 +36,7 @@ def detect_noise_sections_for_line_par(
 
     result = detect_noise_sections_for_line(data, low_threshold, high_threshold, windsize, step, channel_step, channel_group_size)
     
-    output.put((line_number, result))
+    return (line_number, result)
 
 
 

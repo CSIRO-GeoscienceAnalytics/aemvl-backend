@@ -12,7 +12,7 @@ from app import app
 
 # Bit of a hack to start the code splitting process
 import database as db
-from noise_detection import detect_noise_sections_for_line
+import noise_detection as nd
 
 # Bit of a hack but keeps the db module clean for testing
 db.app = app
@@ -227,7 +227,7 @@ def get_noise():
 
     params = json.loads(request.form["params"])
 
-    line_id = params["line_id"]
+    line_id = params["line_id"] if "line_id" in params else None
     component = params["component"]
     #algorithm = params["algorithm"]
     threshold = params["threshold"]
@@ -241,7 +241,7 @@ def get_noise():
         return jsonify([
             {
                 "line_id": line_id,
-                "noise": detect_noise_sections_for_line(
+                "noise": nd.detect_noise_sections_for_line(
                     line_data,
                     float(threshold["from"]),
                     float(threshold["to"]),
@@ -252,7 +252,22 @@ def get_noise():
             }]
         )
     else:
-        print("Get all the lines")
+        lines = db.get_line_numbers(database_path)
+        line_data = []
+        for line in lines:
+            line_data.append(db.get_line_component_by_id(
+                line, component, database_path, project_id
+            ))
+        results = nd.detect_noise_sections_for_survey_pool(lines, line_data, float(threshold["from"]),
+                    float(threshold["to"]),
+                    int(window),
+                    int(int(window) / 2),
+                    channel_group_size=channels)
+        response = []
+        for r in results:
+            response.append("{'line_id': " + str(r[0]) + "' noise': " + str(r[1]) + "}")
+
+        return jsonify(response)
 
 
 @app.route("/api/getEMData", methods=["POST"])

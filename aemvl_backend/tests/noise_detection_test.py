@@ -14,18 +14,46 @@ def read_line(f):
 
 def test_noise_dections_on_line():
     # Test data set is representative of the return of get_line_component_by_id
-    m = read_line(os.path.join(dirname, "data/200101.csv"))
-    nd.detect_noise_sections_for_line(m, 0.003, 0.01, 20, 10, 2, 4)
-
-def test_noise_dections_on_survey_par():
-    # Test data set is representative of the return of get_line_component_by_id
-    m = [read_line(os.path.join(dirname, "data/200101.csv")), read_line(os.path.join(dirname, "data/200201.csv"))]
-    line_numbers = [200101, 200201]
+    m = read_line(os.path.join(dirname, "data/200301_hmx.csv"))
     start = time.time()
-    results = nd.detect_noise_sections_for_survey_par(line_numbers, m, 0.003, 0.01, 20, 10, 2, 4)
-    end = time.time()
-    print(end - start)
+    nd.detect_noise_sections_for_line(m, 0.003, 0.01, 20, 10, 2, 4)
+    end = time.time()  
+    print("Single Line took" + str(end - start))
 
+def test_noise_dections_on_survey_non_par():
+    # Test data set is representative of the return of get_line_component_by_id
+    m = [read_line(os.path.join(dirname, "data/200101.csv")), 
+        read_line(os.path.join(dirname, "data/200201.csv")),
+        read_line(os.path.join(dirname, "data/200301.csv")),
+        read_line(os.path.join(dirname, "data/200301_hmx.csv")),
+        read_line(os.path.join(dirname, "data/200301_lmz.csv")),
+        read_line(os.path.join(dirname, "data/200401.csv")),
+        read_line(os.path.join(dirname, "data/200501.csv"))
+        ]
+    results = []
+    
+    start = time.time()  
+    for x in range(len(m)):
+        results.append(nd.detect_noise_sections_for_line(m[x], 0.003, 0.01, 20, 10, 2, 4))
+    
+    end = time.time()
+    print("Non Paralel Survey took " + str(end - start))
+
+def test_noise_dections_on_survey_pool():
+    # Test data set is representative of the return of get_line_component_by_id
+    m = [read_line(os.path.join(dirname, "data/200101.csv")), 
+        read_line(os.path.join(dirname, "data/200201.csv")),
+        read_line(os.path.join(dirname, "data/200301.csv")),
+        read_line(os.path.join(dirname, "data/200301_hmx.csv")),
+        read_line(os.path.join(dirname, "data/200301_lmz.csv")),
+        read_line(os.path.join(dirname, "data/200401.csv")),
+        read_line(os.path.join(dirname, "data/200501.csv"))
+        ]
+    line_numbers = [200101, 200201, 200301, 200302, 200303, 200401, 200501]
+    start = time.time()
+    results = nd.detect_noise_sections_for_survey_pool(line_numbers, m, 0.003, 0.01, 20, 10, 2, 4)
+    end = time.time()
+    print("Paralel Survey took " + str(end - start))
     print(results)
 
 
