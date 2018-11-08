@@ -134,6 +134,17 @@ curl -s \
     "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
 
 curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
+    -F 'params={"line_id": 200301,
+        "component": "HM_Z",
+        "threshold": {"from": 0.001, "to": 0.003},
+        "window": 10,
+        "channels": 4}' \
+    "${URL_ROOT}/api/detectNoise"
+
+curl -s \
     -O \
     -H "Accept: text/csv" \
     -F "user_token=testuser" \

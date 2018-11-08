@@ -2,7 +2,7 @@ from functools import wraps
 from flask import Flask, jsonify
 
 app = Flask(__name__)
-app.config.from_pyfile('aemvl-backend.config')
+app.config.from_pyfile("aemvl-backend.config")
 
 
 def get_http_exception_handler(app):
@@ -12,12 +12,15 @@ def get_http_exception_handler(app):
     @wraps(handle_http_exception)
     def ret_val(exception):
         exc = handle_http_exception(exception)
-        return jsonify({
-            'response': 'ERROR',
-            'http_code': exc.code,
-            'message': exc.description}), exc.code
+        return (
+            jsonify(
+                {"response": "ERROR", "http_code": exc.code, "message": exc.description}
+            ),
+            exc.code,
+        )
 
     return ret_val
+
 
 # Override the HTTP exception handler.
 app.handle_http_exception = get_http_exception_handler(app)
@@ -25,7 +28,7 @@ app.handle_http_exception = get_http_exception_handler(app)
 
 @app.errorhandler(500)
 def internal_error(exception):
-    return jsonify({
-        'response': 'ERROR',
-        'http_code': 500,
-        'message': str(exception)}), 500
+    return (
+        jsonify({"response": "ERROR", "http_code": 500, "message": str(exception)}),
+        500,
+    )
