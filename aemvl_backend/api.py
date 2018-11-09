@@ -264,8 +264,14 @@ def get_noise():
                     int(int(window) / 2),
                     channel_group_size=channels)
         response = []
+     
         for r in results:
-            response.append("{'line_id': " + str(r[0]) + "' noise': " + str(r[1]) + "}")
+            if(len(r[1]) > 0):
+                response.append(
+                    {
+                        'line_id':  str(r[0]),
+                        'noise': r[1]
+                    })
 
         return jsonify(response)
 
