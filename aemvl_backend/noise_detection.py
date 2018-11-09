@@ -100,8 +100,8 @@ def detect_noise_sections_for_line(
                 {
                     "index_from": noise_start,
                     "index_to": noise_end,
-                    "fid_from": fid[noise_start],
-                    "fid_to": fid[noise_end],
+                    "fid_from": str(round(fid[noise_start],1)),
+                    "fid_to": str(round(fid[noise_end],1)),
                 }
             )
             noise_start = None
