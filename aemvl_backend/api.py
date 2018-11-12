@@ -269,7 +269,7 @@ def get_noise():
             if(len(r[1]) > 0):
                 response.append(
                     {
-                        'line_id':  str(r[0]),
+                        'line_id': int(r[0]),
                         'noise': r[1]
                     })
 

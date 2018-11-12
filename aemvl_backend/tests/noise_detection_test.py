@@ -62,3 +62,45 @@ def test_get_line_numbers():
 
     assert(isinstance(line_numbers, np.ndarray))
     assert(len(line_numbers) > 1)
+
+def test_noise_merging():
+    noise_array = []
+    noise_array.append(
+        {
+            "index_from": 0,
+            "index_to": 8,
+            "fid_from": "100",
+            "fid_to": "150",
+        })
+    noise_array.append(
+        {
+            "index_from": 10,
+            "index_to": 30,
+            "fid_from": "100",
+            "fid_to": "150",
+        })
+    noise_array.append(
+        {
+            "index_from": 30,
+            "index_to": 50,
+            "fid_from": "100",
+            "fid_to": "150",
+        })
+    noise_array.append(
+        {
+            "index_from": 40,
+            "index_to": 60,
+            "fid_from": "100",
+            "fid_to": "150",
+        })
+    noise_array.append(
+        {
+            "index_from": 65,
+            "index_to": 80,
+            "fid_from": "100",
+            "fid_to": "150",
+        })
+    merged_ranges = nd.mergeRanges(noise_array)
+    print(merged_ranges)
+    assert(len(merged_ranges) == 3)
+

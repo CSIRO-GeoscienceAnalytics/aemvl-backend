@@ -60,15 +60,11 @@ def detect_noise_sections_for_line(
     # Array of noise index ranges
     noise_array = []
 
-    noise_start = None
-    noise_end = None
-
     for j in range(0, columns, int(step)):
         if (j + windsize) > columns:
             break
 
         cgs = channel_group_size
-        noise = False
         for i in range(0, rows, channel_step):
 
             if (i + channel_group_size) > rows:
@@ -85,29 +81,18 @@ def detect_noise_sections_for_line(
                 and has_channel_cross_over(sig[j : j + windsize, i : i + cgs])
             ):
 
-                noise = True
-                if noise_start is None:
-                    noise_start = j
-
+                noise_start = j
                 noise_end = j + windsize
-                break
-
-        # Record noise from previous window(s) if this window is not noisy or it is the last window
-        if noise_start is not None and (
-            noise is False or (j + windsize + step > columns)
-        ):
-            noise_array.append(
+                noise_array.append(
                 {
                     "index_from": noise_start,
                     "index_to": noise_end,
-                    "fid_from": str(round(fid[noise_start],1)),
-                    "fid_to": str(round(fid[noise_end],1)),
-                }
-            )
-            noise_start = None
-            noise_end = None
+                    "fid_from": round(float(fid[noise_start]), 1),
+                    "fid_to": round(float(fid[noise_end]), 1),
+                })
+                break
 
-    return noise_array
+    return mergeRanges(noise_array)
 
 
 def get_deltas_from_matrix(matrix):
@@ -133,3 +118,36 @@ def has_channel_cross_over(matrix):
                 return True
 
     return False
+
+def mergeRanges(noise_array):
+    if(len(noise_array) <= 1):
+        return noise_array
+
+    merge_index = {}
+    merge_array = []
+    fromIndex = None
+    for j in range(len(noise_array)-1):
+        if(noise_array[j]['index_to'] >= noise_array[j+1]['index_from']):
+            if(fromIndex is None):
+                fromIndex = j
+            merge_index[fromIndex] = j+1
+        else:    
+            fromIndex = None
+
+    j = 0
+    while j < len(noise_array):
+        if(j in merge_index):
+            merge_array.append(
+                {
+                    "index_from": noise_array[j]["index_from"],
+                    "index_to": noise_array[merge_index[j]]["index_to"],
+                    "fid_from": noise_array[j]["fid_from"],
+                    "fid_to": noise_array[merge_index[j]]["fid_to"],
+                })
+            j = merge_index[j] + 1
+        else:
+            merge_array.append(noise_array[j])
+            j+=1   
+    
+    return merge_array
+  
