@@ -23,8 +23,9 @@ def get_line_component_by_id(line_number, component, database_path, project_id):
     """
     channel_columns = get_component_column_names(component, project_id)
     columns = ""
-    for x in channel_columns:
-        columns += ", " + x
+    if(isinstance(channel_columns, list)):
+        for x in channel_columns:
+            columns += ", " + x
 
     with sqlite3.connect(database_path) as connection:
         sql = (
@@ -101,7 +102,7 @@ def get_component_column_names(component_name, project_id):
     if component_name in session["projects"][project_id]["flight_plan_info"]:
         return component_name
 
-    if isinstance(
+    if component_name in session["projects"][project_id]["data_definition"] and isinstance(
         session["projects"][project_id]["data_definition"][component_name], list
     ):
         column_suffixes = list(

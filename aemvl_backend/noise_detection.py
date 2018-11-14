@@ -1,6 +1,8 @@
+import logging
 import numpy as np
 import multiprocessing as mp
 
+logger = logging.getLogger(__name__)
 
 def detect_noise_sections_for_survey_pool(
     line_numbers,
@@ -50,11 +52,15 @@ def detect_noise_sections_for_line(
     channel_group_size: int = 4
 ):
     
-    if(data is None or data.shape[0] == 0):
+    if(data is None or data.shape[0] <= 1 or data.shape[1] == 0):
         return []
     
     fid = data[:, 0]
-    sig = np.arcsinh(data[:, 1:])
+    try:
+        sig = np.arcsinh(data[:, 1:])
+    except Exception as e:
+        logger.warning("Exception was caught instead of failing gracefully " + str(e))
+        return []
 
     delta_matrix = get_deltas_from_matrix(sig)
     columns = delta_matrix.shape[0]

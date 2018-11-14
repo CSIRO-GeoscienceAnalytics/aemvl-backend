@@ -137,6 +137,20 @@ curl -s \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
+    -F 'mask_details=[{"line_number": 200001,
+        "component_names": ["HM_Z"],
+        "mask": -1,
+        "range": [[194273.90, 194274.60],[194275.0, 194275.8]]},
+        {"line_number": 200301,
+        "component_names": ["HM_Z"],
+        "mask": -1,
+        "range": [261068.0, 261069.0]}]' \
+    "${URL_ROOT}/api/applyMaskToAllChannelsBetweenFiducials"
+
+curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
     -F 'params={"line_id": 200301,
         "component": "HM_Z",
         "threshold": {"from": 0.001, "to": 0.003},
@@ -159,7 +173,7 @@ curl -s \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
-    -F 'params={ "component": "HM_X",
+    -F 'params={ "component": "LM_Z",
         "threshold": {"from": 0.001, "to": 0.003},
         "window": 10,
         "channels": 4}' \

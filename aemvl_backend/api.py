@@ -387,34 +387,41 @@ def apply_mask_to_all_channels_between_fiducials():
 
     mask_details = json.loads(request.form["mask_details"])
 
-    line_number = mask_details["line_number"]
-    component_names = db.expand_component_names(
-        project_id, mask_details["component_names"]
-    )
+    if(not isinstance(mask_details, list)):
+        mask_details = [mask_details]
 
-    full_component_names = []
-    for component_name in component_names:
-        full_component_names.append(
-            db.get_component_column_names(component_name, project_id)
+    for detail in mask_details:
+        line_number = detail["line_number"]
+        
+        component_names = db.expand_component_names(
+            project_id, detail["component_names"]
         )
 
-    mask = mask_details["mask"]
+        full_component_names = []
+        for component_name in component_names:
+            full_component_names.append(
+                db.get_component_column_names(component_name, project_id)
+            )            
 
-    fiducial_min, fiducial_max = mask_details["range"]
+        mask = detail["mask"]
 
-    with sqlite3.connect(database_path) as connection:
-        cursor = connection.cursor()
+        ranges = detail["range"]
+        if(not isinstance(ranges[0], list)):
+            ranges = [ranges]
 
-        for full_component_name in full_component_names:
-            sql = (
-                "UPDATE dataframe SET "
-                + ("_mask = " + str(mask) + ",").join(full_component_name)
-                + "_mask = "
-                + str(mask)
-                + " WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?"
-            )
+        with sqlite3.connect(database_path) as connection:
+            cursor = connection.cursor()
 
-            cursor.execute(sql, (line_number, fiducial_min, fiducial_max))
+            for full_component_name in full_component_names:
+                sql = (
+                    "UPDATE dataframe SET "
+                    + ("_mask = " + str(mask) + ",").join(full_component_name)
+                    + "_mask = "
+                    + str(mask)
+                    + " WHERE LineNumber = ? AND Fiducial BETWEEN ? AND ?"
+                )
+                for fid_range in ranges:
+                    cursor.execute(sql, (line_number, fid_range[0], fid_range[1]))
 
     return jsonify({"response": "OK", "message": "Changes applied"})
 
