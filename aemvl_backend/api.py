@@ -231,13 +231,14 @@ def get_noise():
     component = params["component"]
     #algorithm = params["algorithm"]
     threshold = params["threshold"]
-    window = params["window"] if params["window"] is not None else 20
-    channels = params["channels"] if params["channels"] is not None else 4
+    window = params["window"] if "window" in params else 20
+    channels = params["channels"] if "channels" in params else 4
 
     if line_id is not None:
         line_data = db.get_line_component_by_id(
             line_id, component, database_path, project_id
         )
+
         return jsonify([
             {
                 "line_id": line_id,

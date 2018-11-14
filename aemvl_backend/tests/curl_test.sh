@@ -148,7 +148,18 @@ curl -s \
     -H "Accept: application/json" \
     -F "user_token=testuser" \
     -F "project_id=TESTPROJECT2" \
-    -F 'params={ "component": "HM_Z",
+    -F 'params={"line_id": 2343248,
+        "component": "HM_X",
+        "threshold": {"from": 0.001, "to": 0.003},
+        "window": 10,
+        "channels": 4}' \
+    "${URL_ROOT}/api/detectNoise"
+
+curl -s \
+    -H "Accept: application/json" \
+    -F "user_token=testuser" \
+    -F "project_id=TESTPROJECT2" \
+    -F 'params={ "component": "HM_X",
         "threshold": {"from": 0.001, "to": 0.003},
         "window": 10,
         "channels": 4}' \

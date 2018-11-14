@@ -50,6 +50,9 @@ def detect_noise_sections_for_line(
     channel_group_size: int = 4
 ):
     
+    if(data is None or data.shape[0] == 0):
+        return []
+    
     fid = data[:, 0]
     sig = np.arcsinh(data[:, 1:])
 
