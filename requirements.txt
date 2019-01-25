@@ -4,6 +4,7 @@
 click
 curl
 flask
+flask-cors
 gdal
 geos
 geotiff

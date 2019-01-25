@@ -2,9 +2,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 from flask import Flask, jsonify
+from flask_cors import CORS
 import config
 
 app = Flask(__name__)
+CORS(app)
 app.config.from_object(config.Config())
 app.logger.setLevel(int(app.config["LOG_LEVEL"]))
 
