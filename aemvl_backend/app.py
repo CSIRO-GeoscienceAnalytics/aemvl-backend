@@ -2,10 +2,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 from functools import wraps
 from flask import Flask, jsonify
+import config
 
 app = Flask(__name__)
-app.config.from_pyfile("aemvl-backend.config")
-
+app.config.from_object(config.Config())
+app.logger.setLevel(int(app.config["LOG_LEVEL"]))
 
 def get_http_exception_handler(app):
     """Overrides the default http exception handler to return JSON."""

@@ -67,7 +67,7 @@ def list_projects():
 
     project_ids = glob.glob(users_path)
     project_ids = [
-        project_id[len("./uploads/") + len(user_token) + 1 :]
+        os.path.basename(os.path.normpath(project_id))
         for project_id in project_ids
     ]
 
