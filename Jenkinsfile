@@ -25,7 +25,7 @@ pipeline {
 				sh 'PATH=/opt/conda/envs/env/bin:$PATH'
 				sh 'conda install --file requirements.txt'
 				sh 'GDAL_DATA=/opt/miniconda3/envs/aemvl-backend/share/epsg_csv'
-				sh 'pip install pylint py-test python-dotenv'
+				sh 'pip install pylint, py-test, python-dotenv'
 
 				echo "Unit Tests"
 				sh 'py.test --verbose --junit-xml test-reports/results.xml'
@@ -37,9 +37,7 @@ pipeline {
 			}
 			post {
 				always {
-					junit (allowEmptyResults: true,
-                  testResults: './test-reports/results.xml',
-                  fingerprint: true)
+					junit 'test-reports/results.xml'
 					sh 'sh clean.sh'
 				}
 			}
