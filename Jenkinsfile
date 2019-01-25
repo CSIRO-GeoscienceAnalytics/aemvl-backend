@@ -4,7 +4,6 @@ pipeline {
 				registry = "https://docker-registry.it.csiro.au"
 				imageName = "aemvl/backend"
 				registryCredential = "sam-nexus"
-				// GIT_REPO = "bitbucket.csiro.au/scm/datmos/data-mosaic-core.git"
 		}
 	agent none
 		options {
@@ -26,12 +25,21 @@ pipeline {
 				sh 'PATH=/opt/conda/envs/env/bin:$PATH'
 				sh 'conda install --file requirements.txt'
 				sh 'GDAL_DATA=/opt/miniconda3/envs/aemvl-backend/share/epsg_csv'
-				sh 'pip install python-dotenv'
+				sh 'pip install pylint py-test python-dotenv'
+
+				echo "Unit Tests"
 				sh 'py.test --verbose --junit-xml test-reports/results.xml'
+
+				echo "Style check"
+				sh  ''' 
+								pylint aemvl-backend || true
+						'''		
 			}
 			post {
 				always {
-					junit 'test-reports/results.xml'
+					junit (allowEmptyResults: true,
+                  testResults: './test-reports/results.xml',
+                  fingerprint: true)
 					sh 'sh clean.sh'
 				}
 			}
