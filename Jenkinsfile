@@ -17,6 +17,7 @@ pipeline {
 			agent {
 				docker {
 					image 'continuumio/miniconda3'
+					args '-u root:root'
 				}
 			}
             steps {
