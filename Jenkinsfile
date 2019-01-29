@@ -32,7 +32,7 @@ pipeline {
 
 				echo "Style check"
 				sh  ''' 
-								pylint aemvl-backend || true
+								pylint aemvl_backend || true
 						'''		
 			}
 			post {
